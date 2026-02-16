@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace Étudiant - ESTIA</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: { 
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { 
+                        primary: '#0f172a', 
+                        'primary-foreground': '#f8fafc',
+                        accent: '#3b82f6', 
+                        success: '#22c55e', 
+                        warning: '#f59e0b' 
+                    } 
+                } 
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .view { display: none; opacity: 0; transition: opacity 0.3s ease-in-out; }
+        .view.active { display: block; opacity: 1; }
+        
+        .nav-link { cursor: pointer; transition: all 0.2s; border-bottom: 2px solid transparent; color: #94a3b8; }
+        .nav-link:hover { background-color: rgba(255,255,255,0.1); color: #f8fafc; }
+        .nav-link.active-link { background-color: rgba(255,255,255,0.15); border-bottom: 2px solid #3b82f6; color: #f8fafc; }
+
+        .tab-btn { position: relative; color: #64748b; transition: all 0.2s; }
+        .tab-btn:hover { color: #0f172a; }
+        .tab-btn.active-tab { color: #0f172a; font-weight: 600; border-bottom: 2px solid #0f172a; }
+        
+        .modal { transition: opacity 0.2s ease-in-out; }
+        .modal-content { transform: scale(0.95); transition: transform 0.2s ease-in-out; }
+        .modal.flex .modal-content { transform: scale(1); }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+    <nav class="sticky top-0 z-50 bg-primary text-primary-foreground shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-8">
+                    <span class="text-2xl font-bold tracking-tight">ESTIA <span class="text-xs font-normal bg-white/10 px-2 py-0.5 rounded ml-2">Étudiant</span></span>
+                    <div class="flex items-center gap-1">
+                        <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-link active-link px-4 py-2 rounded-md flex items-center gap-2 text-sm font-medium">
+                            <i class="fa-solid fa-chart-pie"></i> Tableau de bord
+                        </button>
+                        <button onclick="switchView('jobs')" id="nav-jobs" class="nav-link px-4 py-2 rounded-md flex items-center gap-2 text-sm font-medium">
+                            <i class="fa-solid fa-briefcase"></i> Offres
+                        </button>
+                        <button onclick="switchView('profile')" id="nav-profile" class="nav-link px-4 py-2 rounded-md flex items-center gap-2 text-sm font-medium">
+                            <i class="fa-solid fa-user"></i> Mon Profil
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-medium" id="user-name">Étudiant</span>
+                    <div id="user-avatar" class="w-10 h-10 bg-gradient-to-br from-accent to-blue-700 rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-primary">
+                        ET
+                    </div>
+                    <button onclick="logout()" class="text-slate-400 hover:text-white transition p-2"><i class="fa-solid fa-right-from-bracket"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        
+        <section id="view-dashboard" class="view active">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Tableau de bord</h1>
+                <p id="dashboard-welcome-msg" class="text-slate-500 mt-1">Bienvenue ! Voici un aperçu de vos candidatures.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="card p-6 border-l-4 border-l-primary bg-white rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-slate-500 font-medium">Candidatures</p>
+                            <p id="kpi-candidatures" class="text-3xl font-bold text-slate-900 mt-1">0</p>
+                            <div class="mt-2 text-xs text-green-600 font-bold">+<span id="kpi-candidatures-week">0</span> cette semaine</div>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center"><i class="fa-solid fa-paper-plane text-primary text-xl"></i></div>
+                    </div>
+                </div>
+                <div class="card p-6 border-l-4 border-l-success bg-white rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-slate-500 font-medium">Entretiens</p>
+                            <p id="kpi-entretiens" class="text-3xl font-bold text-slate-900 mt-1">0</p>
+                            <div class="mt-2 text-xs text-green-600 font-bold">Prochain: Bientôt</div>
+                        </div>
+                        <div class="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center"><i class="fa-solid fa-calendar-check text-success text-xl"></i></div>
+                    </div>
+                </div>
+                <div class="card p-6 border-l-4 border-l-accent bg-white rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-slate-500 font-medium">Offres Favorites</p>
+                            <p id="kpi-favorites" class="text-3xl font-bold text-slate-900 mt-1">0</p>
+                            <div class="mt-2 text-xs text-blue-600 font-bold">À surveiller</div>
+                        </div>
+                        <div class="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center"><i class="fa-solid fa-heart text-accent text-xl"></i></div>
+                    </div>
+                </div>
+                <div class="card p-6 border-l-4 border-l-warning bg-white rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-slate-500 font-medium">Contacts</p>
+                            <p id="kpi-contacts" class="text-3xl font-bold text-slate-900 mt-1">0</p>
+                            <div class="mt-2 text-xs text-slate-500 font-bold">Réseau ESTIA</div>
+                        </div>
+                        <div class="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center"><i class="fa-solid fa-address-book text-warning text-xl"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="card p-6 bg-white rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-semibold text-slate-900 mb-4">Candidatures par secteur</h3>
+                    <div class="h-64 flex items-center justify-center"><canvas id="sectorChart"></canvas></div>
+                </div>
+                <div class="card p-6 bg-white rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-semibold text-slate-900 mb-4">Statuts des candidatures</h3>
+                    <div class="h-64 flex items-center justify-center"><canvas id="statusChart"></canvas></div>
+                </div>
+            </div>
+            
+            <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                <div class="border-b border-slate-200 px-6 flex gap-8 bg-slate-50/50">
+                    <button class="tab-btn active-tab py-4 text-sm font-medium" data-tab="candidatures">Mes Candidatures</button>
+                    <button class="tab-btn py-4 text-sm font-medium text-slate-500" data-tab="contacts">Mes Contacts</button>
+                </div>
+                
+                <div id="tab-candidatures" class="tab-content p-0 block">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="text-sm text-slate-500 bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th class="px-6 py-4 font-medium text-left cursor-pointer hover:text-blue-600 transition group" onclick="handleSort('company')">
+                                        Entreprise <i id="sort-icon-company" class="fa-solid fa-sort ml-1 opacity-50 group-hover:opacity-100 transition"></i>
+                                    </th>
+                                    <th class="px-6 py-4 font-medium text-left cursor-pointer hover:text-blue-600 transition group" onclick="handleSort('position')">
+                                        Poste <i id="sort-icon-position" class="fa-solid fa-sort ml-1 opacity-50 group-hover:opacity-100 transition"></i>
+                                    </th>
+                                    <th class="px-6 py-4 font-medium text-left cursor-pointer hover:text-blue-600 transition group" onclick="handleSort('date')">
+                                        Date <i id="sort-icon-date" class="fa-solid fa-sort ml-1 opacity-50 group-hover:opacity-100 transition"></i>
+                                    </th>
+                                    <th class="px-6 py-4 font-medium text-center cursor-pointer hover:text-blue-600 transition group" onclick="handleSort('status')">
+                                        Statut <i id="sort-icon-status" class="fa-solid fa-sort ml-1 opacity-50 group-hover:opacity-100 transition"></i>
+                                    </th>
+                                    <th class="px-6 py-4 font-medium text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="candidatures-table-body" class="divide-y divide-slate-100 bg-white"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="tab-contacts" class="tab-content p-6 hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="contacts-grid"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-jobs" class="view">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-slate-900">Offres de Stage</h1>
+                <p class="text-slate-500 mt-2">Découvrez les opportunités publiques</p>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8 flex flex-col md:flex-row gap-4 items-center">
+                <div class="flex-1 relative w-full">
+                    <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="job-search" placeholder="Rechercher un poste, une entreprise..." class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent outline-none transition">
+                </div>
+                <div class="flex gap-4 w-full md:w-auto">
+                    <div class="relative">
+                        <select id="sector-filter" class="px-4 py-2.5 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent outline-none bg-white">
+                            <option value="">Tous secteurs</option>
+                            <option value="aero">Aéronautique</option>
+                            <option value="tech">Tech / IT</option>
+                            <option value="energie">Énergie</option>
+                            <option value="conseil">Conseil</option>
+                        </select>
+                    </div>
+                    <div class="relative">
+                        <select id="contract-filter" class="px-4 py-2.5 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent outline-none bg-white">
+                            <option value="">Tous contrats</option>
+                            <option value="Stage">Stage</option>
+                            <option value="Alternance">Alternance</option>
+                            <option value="CDI">CDI</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="jobs-grid"></div>
+        </section>
+
+        <section id="view-profile" class="view">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Mon Profil</h1>
+                <p class="text-slate-500 mt-1">Gérez vos informations et documents</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-lg text-slate-900 mb-6 border-b border-slate-100 pb-4">Mes informations</h3>
+                    <form class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Nom complet</label>
+                                <input type="text" id="student-name" class="w-full px-4 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Email école</label>
+                                <input type="email" id="student-email" class="w-full px-4 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent outline-none">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Téléphone</label>
+                                <input type="tel" id="student-phone" class="w-full px-4 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Rôle</label>
+                                <input type="text" id="student-role" disabled class="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-500 rounded-md">
+                            </div>
+                        </div>
+                        <div class="pt-4 flex justify-end">
+                            <button type="button" onclick="saveStudentProfile()" class="bg-primary hover:bg-slate-800 text-white px-6 py-2.5 rounded-md font-medium transition shadow-sm">
+                                Enregistrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card p-6">
+                    <h3 class="text-lg font-semibold text-slate-900 mb-6">Mes CV</h3>
+                    <div class="space-y-4">     
+                        <div class="group">
+                            <input type="file" id="input-cv-fr" class="hidden" accept=".pdf,.doc,.docx" onchange="handleFileSelect('fr', this)">
+                            
+                            <div id="cv-fr-card" class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-accent hover:bg-slate-50 transition cursor-pointer" 
+                                onclick="document.getElementById('input-cv-fr').click()">
+                            <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fa-solid fa-file-pdf text-primary text-xl"></i>
+                            </div>
+                            <p class="font-medium text-slate-900">CV Français</p>
+                            <div class="text-sm text-slate-500 mt-1 h-8 flex items-center justify-center" id="cv-fr-status">
+                                Cliquez pour téléverser
+                            </div>
+                            </div>
+                        </div>
+                        
+                        <div class="group">
+                            <input type="file" id="input-cv-en" class="hidden" accept=".pdf,.doc,.docx" onchange="handleFileSelect('en', this)">
+                            
+                            <div id="cv-en-card" class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-accent hover:bg-slate-50 transition cursor-pointer" 
+                                onclick="document.getElementById('input-cv-en').click()">
+                            <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fa-solid fa-file-pdf text-accent text-xl"></i>
+                            </div>
+                            <p class="font-medium text-slate-900">CV Anglais</p>
+                            <div class="text-sm text-slate-500 mt-1 h-8 flex items-center justify-center" id="cv-en-status">
+                                Cliquez pour téléverser
+                            </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-8 border-t border-slate-200">
+                <div class="flex items-center gap-2 mb-6">
+                    <i class="fa-solid fa-heart text-red-500"></i>
+                    <h3 class="text-xl font-bold text-slate-900">Mes Offres Favorites</h3>
+                </div> 
+                <div id="favorites-container" class="grid grid-cols-1 gap-4">
+                    <p class="text-slate-500 text-sm italic">Chargement...</p>
+                </div>
+            </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="modal" class="hidden fixed inset-0 z-[100] items-center justify-center">
+        <div class="absolute inset-0 bg-primary/40 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+        <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 relative z-10 overflow-hidden transform scale-95 opacity-0 transition-all">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/80">
+                <h3 id="modal-title" class="font-bold text-lg text-slate-900">Titre</h3>
+                <button onclick="closeModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="modal-content" class="p-6">
+                </div>
+        </div>
+    </div>
+
+    <div id="modal-chat" class="fixed inset-0 z-[100] hidden items-center justify-center">
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onclick="closeChatModal()"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 relative z-10 overflow-hidden flex flex-col h-[600px] transform transition-all scale-100">
+
+            <input type="hidden" id="chat-receiver-id">
+            <input type="hidden" id="chat-job-id">
+            
+            <div class="px-6 py-4 border-b border-slate-100 bg-white flex justify-between items-center shadow-sm z-10">
+                <div class="flex items-center gap-3">
+                    <div id="chat-avatar" class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm">RH</div>
+                    <div>
+                        <h3 id="chat-name" class="font-bold text-slate-900 leading-tight">Recruteur</h3>
+                        <p id="chat-company" class="text-xs text-slate-500">Entreprise</p>
+                    </div>
+                </div>
+                <button onclick="closeChatModal()" class="text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-50 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50">
+                <div class="flex justify-center my-4">
+                    <span class="text-xs text-slate-400 bg-slate-200 px-3 py-1 rounded-full">Aujourd'hui</span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-xs shrink-0">RH</div>
+                    <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-slate-700 max-w-[80%] border border-slate-100">
+                        Bonjour ! Merci pour votre candidature. Quand seriez-vous disponible pour un entretien ?
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-white border-t border-slate-100">
+                <form onsubmit="sendMessage(event)" class="flex gap-2">
+                    <input type="text" id="chat-input" placeholder="Écrivez votre message..." class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition text-sm">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl transition shadow-md flex items-center justify-center w-12">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-notification" class="fixed inset-0 z-[200] hidden items-end justify-center sm:items-start sm:justify-end p-6 pointer-events-none">
+        <div id="notif-content" class="bg-white border-l-4 border-accent shadow-2xl rounded-lg p-6 w-full max-w-sm pointer-events-auto flex flex-col gap-3">
+            
+            <div class="flex items-start gap-4">
+                <div id="notif-icon" class="text-2xl text-accent pt-1">
+                    <i class="fa-solid fa-bell"></i>
+                </div>
+                <div class="flex-1">
+                    <h4 id="notif-title" class="font-bold text-slate-900 text-lg mb-1">Titre</h4>
+                    <p id="notif-message" class="text-slate-600 text-sm">Message contenu...</p>
+                </div>
+                <button onclick="closeNotification()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <button id="notif-action-btn" class="hidden w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold py-2 rounded-lg transition shadow-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-comments"></i> Voir la conversation
+            </button>
+
+        </div>
+    </div>
+
+    <script>
+        // --- DONNÉES GLOBALES (Initialisées vides pour l'API) ---
+        let studentInfo = {};
+        let jobs = [];
+        let candidatures = [];
+        let contacts = []; 
+        let favorites = []; 
+        let currentSort = { column: 'date', order: 'desc' };
+
+        const statusConfig = {
+            en_attente: { label: 'En attente', class: 'bg-slate-100 text-slate-700 border border-slate-200' },
+            entretien: { label: 'Entretien', class: 'bg-blue-50 text-blue-700 border border-blue-100' },
+            accepte: { label: 'Accepté', class: 'bg-green-50 text-green-700 border border-green-100' },
+            refuse: { label: 'Refusé', class: 'bg-red-50 text-red-700 border border-red-100' },
+            nouveau: { label: 'Nouveau', class: 'bg-amber-50 text-amber-700 border border-amber-100' }
+        };
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            setupEventListeners();
+            await checkSession();     // 1. Qui est connecté ?
+            await loadJobs();         // 2. Récupérer les offres
+            await loadCandidatures(); // 3. Récupérer les candidatures
+            renderContactsGrid();     // 4. Rendu contacts (vide ou statique)
+            renderFavoritesInProfile(); // 5. Rendu favoris
+            initCharts();             // 6. Initialiser les graphiques une première fois
+        });
+
+        async function checkSession() {
+            try {
+                const res = await fetch('api.php?action=check_session');
+                const data = await res.json();
+                if(!data.logged_in) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                studentInfo = data.user;
+                updateGlobalUI();
+            } catch (e) {
+                console.error("Erreur session", e);
+            }
+        }
+
+        async function logout() {
+            await fetch('api.php?action=logout');
+            window.location.href = 'login.html';
+        }
+
+        async function loadJobs() {
+            try {
+                const res = await fetch('api.php?action=get_jobs');
+                jobs = await res.json();
+                renderJobsGrid();
+                renderFavoritesInProfile(); // Mise à jour après chargement des jobs
+            } catch (e) { console.error("Erreur chargement jobs", e); }
+        }
+
+        async function loadCandidatures() {
+            try {
+                const res = await fetch('api.php?action=get_applications');
+                const data = await res.json();
+                
+                // Sécurité si l'API renvoie null ou autre chose qu'un tableau
+                candidatures = Array.isArray(data) ? data : [];
+                
+                updateKPIs();
+                renderCandidaturesTable();
+                renderContactsGrid(); // Pour l'onglet contact
+                initCharts();         // Pour les graphiques
+                
+                // --- CORRECTION ICI ---
+                // On rafraîchit la grille des offres maintenant qu'on a les candidatures
+                renderJobsGrid(); 
+                
+            } catch (e) { 
+                console.error("Erreur chargement candidatures", e); 
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('job-search').addEventListener('input', filterJobs);
+            document.getElementById('sector-filter').addEventListener('change', filterJobs);
+            document.getElementById('contract-filter').addEventListener('change', filterJobs);
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+        }
+
+        // --- UI & DATA BINDING ---
+        function updateGlobalUI() {
+            document.getElementById('user-name').textContent = studentInfo.name;
+            const initials = studentInfo.name ? studentInfo.name.substring(0,2).toUpperCase() : 'ET';
+            document.getElementById('user-avatar').textContent = initials;
+            document.getElementById('dashboard-welcome-msg').textContent = `Bienvenue, ${studentInfo.name} ! Voici un aperçu de vos candidatures.`;
+            
+            // Remplir le formulaire profil
+            document.getElementById('student-name').value = studentInfo.name || '';
+            document.getElementById('student-email').value = studentInfo.email || '';
+            document.getElementById('student-phone').value = studentInfo.phone || '';
+            document.getElementById('student-role').value = studentInfo.role || '';
+        }
+
+        function updateKPIs() {
+            document.getElementById('kpi-candidatures').textContent = candidatures.length;
+            document.getElementById('kpi-candidatures-week').textContent = candidatures.length > 0 ? 1 : 0; 
+            document.getElementById('kpi-entretiens').textContent = candidatures.filter(c => c.status === 'entretien').length;
+            document.getElementById('kpi-favorites').textContent = favorites.length;
+            
+            // Le KPI contacts est maintenant géré directement dans renderContactsGrid
+            // pour être synchro avec le filtrage
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active-link'));
+            document.getElementById('view-' + viewId).classList.add('active');
+            document.getElementById('nav-' + viewId).classList.add('active-link');
+            
+            if (viewId === 'profile') renderFavoritesInProfile();
+            
+            // CORRECTION: Dessiner les graphiques SEULEMENT quand le dashboard devient visible
+            if (viewId === 'dashboard') {
+                setTimeout(initCharts, 100); // Petit délai pour être sûr que le DOM est prêt
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                if(btn.dataset.tab === tabId) {
+                    btn.classList.add('active-tab'); btn.classList.remove('text-slate-500');
+                } else {
+                    btn.classList.remove('active-tab'); btn.classList.add('text-slate-500');
+                }
+            });
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+        }
+
+        function filterJobs() {
+            renderJobsGrid();
+        }
+
+        function renderJobsGrid() {
+            const search = document.getElementById('job-search').value.toLowerCase();
+            const sector = document.getElementById('sector-filter').value;
+            const contract = document.getElementById('contract-filter').value;
+
+            const sectorNames = { 'aero': 'Aéronautique', 'tech': 'Tech / IT', 'energie': 'Énergie', 'conseil': 'Conseil' };
+
+            const filteredJobs = jobs.filter(job => {
+                const matchesSearch = job.title.toLowerCase().includes(search) || job.company.toLowerCase().includes(search);
+                const matchesSector = sector === "" || job.sector === sector;
+                const matchesContract = contract === "" || job.type.includes(contract);
+                return matchesSearch && matchesSector && matchesContract;
+            });
+
+            const grid = document.getElementById('jobs-grid');
+            if (filteredJobs.length === 0) {
+                grid.innerHTML = '<p class="col-span-full text-center text-slate-500 py-10">Aucune offre trouvée.</p>';
+                return;
+            }
+            
+            grid.innerHTML = filteredJobs.map(job => {
+                // 1. Vérification : est-ce que l'ID de l'offre est dans mes candidatures ?
+                // On utilise parseInt pour être sûr de comparer des nombres (1 vs "1")
+                const hasApplied = candidatures.some(c => parseInt(c.job_id) === parseInt(job.id));
+                
+                // 2. Choix du bouton
+                let buttonHtml;
+                if (hasApplied) {
+                    // BOUTON VERT DÉSACTIVÉ
+                    buttonHtml = `
+                        <button disabled class="flex-1 bg-green-50 text-green-600 text-sm font-bold py-2.5 rounded-lg border border-green-100 cursor-default flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-check"></i> Déjà postulé
+                        </button>
+                    `;
+                } else {
+                    // BOUTON BLEU ACTIF
+                    buttonHtml = `
+                        <button onclick="applyToJob(${job.id})" class="flex-1 bg-primary hover:bg-slate-800 text-white text-sm font-medium py-2.5 rounded-lg transition shadow-sm transform active:scale-95">
+                            Postuler
+                        </button>
+                    `;
+                }
+
+                const isFav = favorites.includes(parseInt(job.id));
+                const heartClass = isFav ? "fa-solid fa-heart text-red-500" : "fa-regular fa-heart text-slate-400";
+                const sectorLabel = sectorNames[job.sector] || job.sector;
+                const logoDisplay = job.company ? job.company.substring(0,2).toUpperCase() : 'ES';
+
+                return `
+                <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-lg transition group relative overflow-hidden">
+                    <div class="flex justify-between items-start mb-4 pl-3">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center font-bold text-lg shadow-sm border border-blue-100">${logoDisplay}</div>
+                        <div class="flex flex-col items-end gap-2">
+                            <div class="flex gap-2">
+                                <span class="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-full uppercase tracking-wide border border-slate-200">
+                                    ${sectorLabel}
+                                </span>
+                                <span class="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full uppercase tracking-wide">
+                                    ${job.type}
+                                </span>
+                            </div>
+                            
+                            <div class="flex items-center gap-1">
+                                <button onclick="openReportModal(${job.id}, '${job.title.replace(/'/g, "\\'")}')" class="text-slate-300 hover:text-orange-500 transition transform active:scale-90 p-1" title="Signaler cette offre">
+                                    <i class="fa-solid fa-flag"></i>
+                                </button>
+                                
+                                <button onclick="toggleFavorite(${job.id})" class="text-xl transition transform active:scale-90 p-1">
+                                    <i id="fav-icon-${job.id}" class="${heartClass}"></i>
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                    <h3 class="font-bold text-lg text-slate-900 pl-3">${job.title}</h3>
+                    <p class="text-slate-500 text-sm mb-6 pl-3 flex items-center gap-2"><i class="fa-solid fa-location-dot text-slate-300"></i> ${job.location}</p>
+                    
+                    <div class="pl-3 flex gap-3 mt-auto pt-4 border-t border-slate-100">
+                        ${buttonHtml}
+                        <button onclick="openJobDetails(${job.id})" class="px-4 py-2.5 border border-slate-200 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-50 transition">Détails</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderCandidaturesTable() {
+            const tbody = document.getElementById('candidatures-table-body');
+            if (!tbody) return;
+
+            const typeStyles = {
+                'Stage':      'bg-yellow-50 text-yellow-700 border border-yellow-200',
+                'Alternance': 'bg-purple-50 text-purple-700 border border-purple-200',
+                'CDI':        'bg-green-50 text-green-700 border border-green-200',
+                'CDD':        'bg-orange-50 text-orange-700 border border-orange-200'
+            };
+            const sectorNames = { 'aero': 'Aéronautique', 'tech': 'Tech / IT', 'energie': 'Énergie', 'conseil': 'Conseil' };
+            const statusIcons = { 'en_attente': 'fa-clock', 'entretien': 'fa-calendar-day', 'accepte': 'fa-check-circle', 'refuse': 'fa-circle-xmark', 'nouveau': 'fa-star' };
+
+            tbody.innerHTML = candidatures.map(c => {
+                const typeClass = typeStyles[c.type] || 'bg-slate-50 text-slate-600 border border-slate-200';
+                const statusClass = statusConfig[c.status]?.class || 'bg-gray-100 text-gray-600';
+                const statusLabel = statusConfig[c.status]?.label || c.status;
+                const iconClass = statusIcons[c.status] || 'fa-circle';
+                const logoDisplay = c.company ? c.company.substring(0,2).toUpperCase() : 'ES';
+                const sectorDisplay = sectorNames[c.sector] || c.sector;
+
+                return `
+                <tr class="border-b border-slate-100 hover:bg-slate-50 transition duration-150 group">
+                    <td class="px-6 py-4 whitespace-nowrap text-left">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-800 to-slate-700 text-white flex items-center justify-center font-bold text-sm shadow-sm border border-slate-600">${logoDisplay}</div>
+                            <div>
+                                <div class="font-bold text-slate-900 text-sm">${c.company}</div>
+                                <div class="text-xs text-slate-500 mt-0.5 capitalize">${sectorDisplay}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-left">
+                        <div class="flex flex-col items-start gap-1">
+                            <span class="text-sm font-semibold text-slate-700">${c.position}</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${typeClass}">${c.type}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-left">
+                        <div class="flex items-center justify-start gap-2 text-sm text-slate-500 font-medium"><i class="fa-regular fa-calendar text-slate-400"></i> ${formatDate(c.date)}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                        <div class="flex items-center justify-center"><span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border border-transparent ${statusClass}"><i class="fa-solid ${iconClass}"></i> ${statusLabel}</span></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                        <button onclick="openJobDetails(${c.job_id})" class="ml-20 w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-accent hover:bg-blue-50 transition border border-transparent hover:border-blue-100">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+
+        function renderContactsGrid() {
+            const grid = document.getElementById('contacts-grid');
+            
+            // 1. Filtrer les candidatures : on garde seulement celles en "entretien" ou "accepte"
+            const contactList = candidatures.filter(c => c.status === 'entretien' || c.status === 'accepte');
+
+            // 2. Mettre à jour le compteur KPI
+            document.getElementById('kpi-contacts').textContent = contactList.length;
+
+            // 3. Gestion du cas vide
+            if (contactList.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full flex flex-col items-center justify-center p-8 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+                        <i class="fa-regular fa-address-book text-4xl mb-3 opacity-50"></i>
+                        <p>Vos contacts apparaîtront ici dès que vous aurez un entretien ou une réponse positive.</p>
+                    </div>`;
+                return;
+            }
+
+            // 4. Affichage des cartes
+            grid.innerHTML = contactList.map(c => {
+                const name = c.recruiter_name || 'Recruteur';
+                const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                const role = "Recruteur"; 
+                const email = c.recruiter_email || 'Non renseigné';
+                const phone = c.recruiter_phone || 'Non renseigné';
+
+                return `
+                <div class="flex items-start gap-4 p-4 bg-white border border-slate-200 rounded-xl hover:shadow-md transition group">
+                
+                    <div class="w-12 h-12 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-lg shrink-0 border border-blue-200">
+                        ${initials}
+                    </div>
+
+                    <div class="flex-1 min-w-0"> 
+                        <div class="mb-1">
+                            <p class="font-bold text-slate-900 truncate">${name}</p>
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">
+                                ${role} @ <span class="text-slate-700 font-bold">${c.company}</span>
+                            </p>
+                        </div>
+
+                        <div class="mb-3">
+                            <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-50 border border-slate-200 text-xs text-slate-600">
+                                <i class="fa-solid fa-briefcase text-blue-500"></i>
+                                Suivi: <span class="font-semibold text-slate-800">${c.position}</span>
+                            </span>
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2 text-sm text-slate-500 hover:text-blue-700 transition cursor-pointer">
+                                <i class="fa-solid fa-envelope w-4 text-center"></i>
+                                <a href="mailto:${email}" class="truncate hover:underline">${email}</a>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-slate-500 hover:text-blue-700 transition cursor-pointer">
+                                <i class="fa-solid fa-phone w-4 text-center"></i>
+                                <a href="tel:${phone}" class="hover:underline">${phone}</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <a href="mailto:${email}" class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition border border-slate-100" title="Envoyer un email">
+                            <i class="fa-solid fa-paper-plane text-xs"></i>
+                        </a>
+                        
+                        <button onclick="openChatModal(${c.recruiter_id}, '${name}', '${c.position}', '${initials}', ${c.job_id})" class="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition border border-slate-200" title="Envoyer un message">
+                            <i class="fa-solid fa-comments text-xs"></i>
+                        </button>
+                        
+                        <a href="tel:${phone}" class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-green-50 hover:text-green-600 transition border border-slate-100" title="Appeler">
+                            <i class="fa-solid fa-phone text-xs"></i>
+                        </a>
+                    </div>
+
+                </div>
+            `}).join('');
+        }
+
+        let currentContactId = null; 
+        let currentJobId = null; // Nouvelle variable globale
+        let chatInterval = null;
+
+        // On ajoute jobId en paramètre
+        // Notez le changement de nom du 3ème paramètre : jobTitle
+        async function openChatModal(recruiterId, name, jobTitle, initials, jobId) {
+            currentContactId = recruiterId;
+            currentJobId = jobId; 
+            
+            document.getElementById('chat-receiver-id').value = recruiterId;
+            document.getElementById('chat-job-id').value = jobId;
+            
+            document.getElementById('chat-name').textContent = name;
+            
+            // Affiche le titre de l'offre ici
+            // On peut ajouter "Offre : " devant pour que ce soit clair
+            document.getElementById('chat-company').textContent = jobTitle; 
+            document.getElementById('chat-avatar').textContent = initials;
+            
+            await loadMessages();
+
+            if(chatInterval) clearInterval(chatInterval);
+            chatInterval = setInterval(loadMessages, 3000);
+
+            const m = document.getElementById('modal-chat');
+            m.classList.remove('hidden'); m.classList.add('flex');
+        }
+
+        async function loadMessages() {
+            if(!currentContactId || !currentJobId) return;
+            try {
+                // On passe le job_id dans l'URL
+                const res = await fetch(`api.php?action=get_messages&contact_id=${currentContactId}&job_id=${currentJobId}`);
+                const messages = await res.json();
+                
+                const container = document.getElementById('chat-messages');
+                container.innerHTML = ''; 
+
+                if (messages.length === 0) {
+                    container.innerHTML = '<div class="text-center text-slate-400 text-xs py-4">Début de la conversation pour cette offre</div>';
+                }
+
+                messages.forEach(msg => {
+                    const isMe = parseInt(msg.sender_id) === parseInt(studentInfo.id); 
+                    const align = isMe ? 'justify-end' : 'justify-start';
+                    const color = isMe ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 border border-slate-100';
+                    const radius = isMe ? 'rounded-tr-none' : 'rounded-tl-none';
+                    const avatar = isMe ? '' : `<div class="w-6 h-6 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 mr-2">RH</div>`;
+
+                    container.innerHTML += `
+                        <div class="flex ${align} items-end gap-1 animate-fade-in">
+                            ${avatar}
+                            <div class="${color} p-3 rounded-2xl ${radius} shadow-md text-sm max-w-[80%]">
+                                ${msg.message}
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function sendMessage(event) {
+            event.preventDefault();
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            const receiverId = document.getElementById('chat-receiver-id').value;
+            const jobId = document.getElementById('chat-job-id').value; // Récupérer le job ID
+
+            if (message && receiverId && jobId) {
+                try {
+                    await fetch('api.php?action=send_message', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        // On envoie le job_id au serveur
+                        body: JSON.stringify({ receiver_id: receiverId, message: message, job_id: jobId })
+                    });
+                    
+                    input.value = "";
+                    await loadMessages();
+                    const container = document.getElementById('chat-messages');
+                    container.scrollTop = container.scrollHeight;
+                } catch(e) { console.error(e); }
+            }
+        }
+        function closeChatModal() {
+            console.log("Fermeture du chat..."); // Pour vérifier dans la console (F12)
+
+            // 1. Arrêter le rafraîchissement automatique
+            if (chatInterval) {
+                clearInterval(chatInterval);
+                chatInterval = null;
+            }
+
+            // 2. Cacher la modale
+            const modal = document.getElementById('modal-chat');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+
+            // 3. Reset des variables de contexte (Optionnel mais propre)
+            if (typeof currentContactId !== 'undefined') currentContactId = null;
+            if (typeof currentJobId !== 'undefined') currentJobId = null;
+        }
+
+        // --- SYSTÈME DE NOTIFICATIONS ---
+
+        // Lancer la vérification toutes les 5 secondes
+        setInterval(checkNotifications, 5000);
+
+        async function checkNotifications() {
+            try {
+                const res = await fetch('api.php?action=check_notifications');
+                const notifications = await res.json();
+
+                if (notifications && notifications.length > 0) {
+                    const notif = notifications[notifications.length - 1];
+                    
+                    // ON PASSE 'notif.data' (qui est une string JSON venant de PHP)
+                    showNotificationModal(notif.type, notif.title, notif.message, notif.data);
+                    
+                    loadCandidatures(); 
+                }
+            } catch(e) { console.error("Erreur polling notifs", e); }
+        }
+
+        function showNotificationModal(type, title, message, dataJson) {
+            const modal = document.getElementById('modal-notification');
+            const content = document.getElementById('notif-content');
+            const icon = document.getElementById('notif-icon');
+            const btn = document.getElementById('notif-action-btn');
+
+            document.getElementById('notif-title').textContent = title;
+            document.getElementById('notif-message').textContent = message;
+
+            // Reset visuel
+            content.className = content.className.replace(/border-\w+-\d+/, '');
+            btn.classList.add('hidden'); // On cache le bouton par défaut
+
+            if (type === 'message') {
+                // STYLE MESSAGE
+                icon.innerHTML = '<i class="fa-solid fa-comments"></i>';
+                icon.className = 'text-2xl pt-1 text-indigo-600';
+                content.classList.add('border-indigo-600');
+
+                // LOGIQUE DU BOUTON
+                if (dataJson) {
+                    try {
+                        // On décode le JSON reçu de la BDD (ex: {"recruiter_id":5, ...})
+                        const data = (typeof dataJson === 'string') ? JSON.parse(dataJson) : dataJson;
+                        
+                        // Calcul des initiales
+                        const initials = data.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+                        // Configuration du clic
+                        btn.onclick = function() {
+                            // On ouvre le chat
+                            openChatModal(data.recruiter_id, data.name, data.company, initials, data.job_id);
+                            // On ferme la notif
+                            closeNotification();
+                        };
+
+                        // On affiche le bouton
+                        btn.classList.remove('hidden');
+                    } catch (e) {
+                        console.error("Erreur parsing data notif", e);
+                    }
+                }
+
+            } else if (title.includes('acceptée')) {
+                icon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+                icon.className = 'text-2xl pt-1 text-green-600';
+                content.classList.add('border-green-600');
+            } else {
+                icon.innerHTML = '<i class="fa-solid fa-bell"></i>';
+                icon.className = 'text-2xl pt-1 text-blue-600';
+                content.classList.add('border-blue-600');
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeNotification() {
+            document.getElementById('modal-notification').classList.add('hidden');
+        }
+        
+
+        // --- CORRECTION : LOGIQUE FAVORIS ---
+        function toggleFavorite(id) {
+            // Conversion en nombre pour être sûr que ça match avec l'ID du job
+            const numericId = parseInt(id); 
+            
+            const index = favorites.indexOf(numericId);
+            if (index === -1) {
+                favorites.push(numericId);
+            } else {
+                favorites.splice(index, 1);
+            }
+            renderJobsGrid(); // Met à jour les coeurs sur la grille
+            renderFavoritesInProfile(); // Met à jour la liste dans le profil
+            updateKPIs();
+        }
+
+        function renderFavoritesInProfile() {
+            const container = document.getElementById('favorites-container');
+            // Filtrage : On compare aussi en Nombre
+            const favJobs = jobs.filter(job => favorites.includes(parseInt(job.id)));
+            
+            if (favJobs.length === 0) { 
+                container.innerHTML = `<div class="p-8 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200"><i class="fa-regular fa-heart text-2xl mb-2 block opacity-30"></i>Aucun favori enregistré.</div>`; 
+                return; 
+            }
+            
+            container.innerHTML = favJobs.map(job => {
+                const logo = job.company ? job.company.substring(0,2).toUpperCase() : 'ES';
+                return `
+                <div class="border border-slate-200 rounded-xl p-4 flex justify-between items-center bg-white hover:shadow-md transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center font-bold">${logo}</div>
+                        <div><p class="font-bold text-slate-800 text-sm">${job.title}</p><p class="text-xs text-slate-500 font-medium uppercase">${job.company}</p></div>
+                    </div>
+                    <button onclick="toggleFavorite(${job.id})" class="text-slate-300 hover:text-red-500 transition px-2"><i class="fa-solid fa-trash"></i></button>
+                </div>`;
+            }).join('');
+        }
+
+        // --- ACTION POSTULER (CORRIGÉE) ---
+        async function applyToJob(id) {
+            // 1. Utiliser '==' au lieu de '===' pour gérer les ID en string ou number
+            const job = jobs.find(j => j.id == id);
+            
+            // Sécurité : si l'offre n'est pas trouvée dans la liste locale
+            const jobTitle = job ? job.title : "cette offre";
+
+            // Vérification locale si déjà postulé
+            if (candidatures.some(c => c.job_id == id)) {
+                showModal("Erreur", `
+                    <div class="text-center py-2">
+                        <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <p class="text-slate-600">Vous avez déjà postulé à cette offre.</p>
+                        <button onclick="closeModal()" class="mt-4 px-6 py-2 bg-slate-200 rounded-lg hover:bg-slate-300">Fermer</button>
+                    </div>
+                `);
+                return;
+            }
+
+            try {
+                const res = await fetch('api.php?action=apply', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ job_id: id })
+                });
+                const result = await res.json();
+
+                if(result.success) {
+                    await loadCandidatures(); 
+                    
+                    // Affichage de la modale de succès
+                    showModal('Candidature envoyée', `<div class="text-center py-4">
+                        <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl shadow-sm">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <p class="text-slate-800 font-bold text-lg">Félicitations !</p>
+                        <p class="text-slate-500 mb-8 mt-2">Votre candidature pour <strong class="text-slate-800">${jobTitle}</strong> a bien été transmise.</p>
+                        <button onclick="closeModal()" class="px-8 py-3 bg-primary text-white rounded-xl font-bold hover:bg-slate-800 shadow-lg hover:shadow-xl transition transform active:scale-95">Ok</button>
+                    </div>`);
+                } else {
+                    showModal('Erreur', 
+                    `<div class="text-center py-4">
+                        <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <p class="text-slate-800 font-bold text-lg">Une erreur est survenue</p>
+                        <p class="text-slate-500 mb-6">${result.message}</p>
+                        <button onclick="closeModal()" class="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 transition">Fermer</button>
+                    </div>`);
+                }
+            } catch (e) {
+                console.error(e);
+                showModal('Erreur', '<p class="text-center p-4">Erreur de connexion au serveur.</p>');
+            }
+        }
+
+        function openJobDetails(id) {
+            // 1. Trouver l'offre
+            // On utilise '==' pour la souplesse (string vs int)
+            const job = jobs.find(j => j.id == id);
+            if(!job) return;
+
+            // 2. Gestion du logo
+            const logo = job.company ? job.company.substring(0,2).toUpperCase() : 'ES';
+
+            // 3. Vérifier si l'étudiant a déjà postulé (Même logique que pour la grille)
+            const hasApplied = candidatures.some(c => parseInt(c.job_id) === parseInt(job.id));
+
+            // 4. Préparer le bouton d'action dynamiquement
+            let actionButton;
+            if (hasApplied) {
+                // Bouton Vert (Désactivé)
+                actionButton = `
+                    <button disabled class="flex-1 bg-green-50 text-green-700 py-3 rounded-xl font-bold border border-green-200 cursor-default flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-check"></i> Déjà postulé
+                    </button>
+                `;
+            } else {
+                // Bouton Bleu (Actif)
+                actionButton = `
+                    <button onclick="closeModal(); applyToJob(${job.id})" class="flex-1 bg-primary text-white py-3 rounded-xl font-bold hover:bg-slate-800 shadow-lg transition transform active:scale-95">
+                        Postuler maintenant
+                    </button>
+                `;
+            }
+
+            // 5. Afficher la modale avec le bouton dynamique
+            showModal('Détails de l\'offre', `<div class="space-y-6">
+                <div class="flex items-center gap-5 pb-6 border-b border-slate-100">
+                    <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center font-bold text-3xl shadow-sm">
+                        ${logo}
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-xl text-slate-900 leading-tight">${job.title}</h4>
+                        <p class="text-slate-500 font-medium flex items-center gap-2 mt-1"><i class="fa-solid fa-building text-slate-300"></i> ${job.company} <span class="w-1 h-1 bg-slate-300 rounded-full"></span> ${job.location}</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100"><p class="text-xs text-slate-400 uppercase font-bold mb-1">Contrat</p><p class="font-bold text-slate-800">${job.type}</p></div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100"><p class="text-xs text-slate-400 uppercase font-bold mb-1">Secteur</p><p class="font-bold text-slate-800 capitalize">${job.sector || 'Tech'}</p></div>
+                </div>
+                <div class="prose prose-sm text-slate-600">
+                    <p><strong>Description :</strong></p>
+                    <p>${job.description || "Rejoignez nos équipes pour participer à des projets innovants."}</p>
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button onclick="closeModal()" class="flex-1 border border-slate-200 py-3 rounded-xl text-slate-600 font-bold hover:bg-slate-50 transition">Retour</button>
+                    ${actionButton}
+                </div>
+            </div>`);
+        }
+
+        // --- SIGNALEMENT (REPORT) ---
+
+        function openReportModal(jobId, jobTitle) {
+            // Nettoyage des caractères spéciaux pour l'affichage
+            const safeTitle = jobTitle.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+            const content = `
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <p class="text-sm text-slate-500 mb-6">
+                        Vous souhaitez signaler l'offre <strong>"${safeTitle}"</strong>.<br>
+                        Veuillez indiquer la raison :
+                    </p>
+                    
+                    <div class="text-left space-y-3 mb-6">
+                        <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+                            <input type="radio" name="report_reason" value="fraud" class="w-4 h-4 text-accent" checked>
+                            <span class="text-sm font-medium text-slate-700">Fraude ou Arnaque suspectée</span>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+                            <input type="radio" name="report_reason" value="discrimination" class="w-4 h-4 text-accent">
+                            <span class="text-sm font-medium text-slate-700">Contenu discriminatoire</span>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+                            <input type="radio" name="report_reason" value="spam" class="w-4 h-4 text-accent">
+                            <span class="text-sm font-medium text-slate-700">Spam / Publicité</span>
+                        </label>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button onclick="closeModal()" class="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium">Annuler</button>
+                        <button onclick="submitReport(${jobId})" class="flex-1 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-bold shadow-md">Signaler</button>
+                    </div>
+                </div>
+            `;
+            
+            showModal("Signaler une offre", content);
+        }
+
+        async function submitReport(jobId) {
+            // 1. Récupérer la raison
+            const radio = document.querySelector('input[name="report_reason"]:checked');
+            const reason = radio ? radio.value : 'autre';
+
+            // --- MODIFICATION IMPORTANTE ICI ---
+            // On NE FERME PAS la modale ici. On la laisse ouverte pendant l'envoi.
+            // Cela évite qu'elle disparaisse pour réapparaître.
+            
+            try {
+                // 2. Appel API
+                const res = await fetch('api.php?action=report_job', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ job_id: jobId, reason: reason })
+                });
+                
+                const result = await res.json();
+
+                if (result.success) {
+                    // 3. SUCCÈS : On remplace le contenu de la modale ouverte instantanément
+                    // La fonction showModal va écraser le formulaire par le message de succès
+                    showModal("Signalement reçu", `
+                        <div class="text-center py-4">
+                            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <p class="text-lg font-bold text-slate-800">Merci de votre vigilance</p>
+                            <p class="text-slate-500 mt-2 text-sm">Ce signalement a été enregistré.</p>
+                            <button onclick="closeModal()" class="mt-6 px-6 py-2 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 transition">Fermer</button>
+                        </div>
+                    `);
+                } else {
+                    // En cas d'erreur, on ferme pour afficher l'alerte (ou on affiche l'erreur dans la modale)
+                    closeModal();
+                    alert("Erreur : " + result.message);
+                }
+            } catch (e) {
+                console.error(e);
+                closeModal();
+                alert("Erreur technique lors de l'envoi.");
+            }
+        }
+        
+
+        async function saveStudentProfile() {
+            const name = document.getElementById('student-name').value;
+            const email = document.getElementById('student-email').value;
+            const phone = document.getElementById('student-phone').value;
+            const id = studentInfo.id;
+
+            try {
+                const res = await fetch('api.php?action=update_user', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ id, name, email, phone, role: studentInfo.role, status: 'active' }) 
+                });
+                const result = await res.json();
+                
+                if(result.success) {
+                        studentInfo.name = name; 
+                        updateGlobalUI();
+                        showModal("Confirmation", `<div class="text-center py-4"><div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-user-check"></i></div><h4 class="text-xl font-bold text-slate-900 mb-2">Profil mis à jour !</h4><p class="text-slate-500 mb-6">Vos informations ont bien été enregistrées.</p><button onclick="closeModal()" class="px-8 py-2.5 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 transition shadow-lg">Compris</button></div>`);
+                }
+            } catch(e) { console.error(e); }
+        }
+        
+        // --- GESTION FICHIERS CV ---
+        function handleFileSelect(lang, inputElement) {
+            if (inputElement.files && inputElement.files.length > 0) {
+                const file = inputElement.files[0];
+                const statusEl = document.getElementById(`cv-${lang}-status`);
+                const cardEl = document.getElementById(`input-cv-${lang}`).parentElement; 
+
+                statusEl.innerHTML = `
+                    <div class="flex items-center justify-center gap-2 text-green-600 font-bold mt-2">
+                        <i class="fa-solid fa-check"></i> <span class="truncate max-w-[150px]">${file.name}</span>
+                        <button onclick="removeFile(event, '${lang}')" class="ml-2 text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                statusEl.classList.remove('text-slate-400');
+                cardEl.classList.remove('border-dashed', 'border-slate-300');
+                cardEl.classList.add('border-solid', 'border-green-500', 'bg-green-50');
+            }
+        }
+
+        function removeFile(event, lang) {
+            event.stopPropagation();
+            event.preventDefault();
+            const input = document.getElementById(`input-cv-${lang}`);
+            input.value = "";
+            const statusEl = document.getElementById(`cv-${lang}-status`);
+            const cardEl = input.parentElement;
+            
+            statusEl.innerHTML = 'Cliquez pour téléverser';
+            statusEl.classList.add('text-slate-400');
+            cardEl.classList.add('border-dashed', 'border-slate-300');
+            cardEl.classList.remove('border-solid', 'border-green-500', 'bg-green-50');
+        }
+
+        // --- MODALE ---
+        function showModal(title, content) {
+            const m = document.getElementById('modal');
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-content').innerHTML = content;
+            m.classList.remove('hidden'); m.classList.add('flex');
+            setTimeout(() => { m.querySelector('.modal-content').classList.remove('scale-95', 'opacity-0'); m.querySelector('.modal-content').classList.add('scale-100', 'opacity-100'); }, 10);
+        }
+        function closeModal() {
+            const m = document.getElementById('modal');
+            m.querySelector('.modal-content').classList.remove('scale-100', 'opacity-100');
+            m.querySelector('.modal-content').classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { m.classList.add('hidden'); m.classList.remove('flex'); }, 200);
+        }
+
+        // --- HELPERS ---
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function handleSort(col) {
+            currentSort.order = (currentSort.column === col && currentSort.order === 'asc') ? 'desc' : 'asc';
+            currentSort.column = col;
+            candidatures.sort((a,b) => {
+                let vA = a[col], vB = b[col];
+                if(vA < vB) return currentSort.order === 'asc' ? -1 : 1;
+                if(vA > vB) return currentSort.order === 'asc' ? 1 : -1;
+                return 0;
+            });
+            renderCandidaturesTable();
+        }
+
+        // --- CHARTS ---
+        let charts = {}; // Stocker les instances
+
+        function initCharts() {
+    // 1. Détruire les anciens graphiques pour éviter les superpositions au survol
+    if (charts.sector && typeof charts.sector.destroy === 'function') charts.sector.destroy();
+    if (charts.status && typeof charts.status.destroy === 'function') charts.status.destroy();
+
+    // 2. Initialiser les compteurs à zéro (en minuscules pour correspondre à la BDD)
+    const sectorCounts = { 'tech': 0, 'aero': 0, 'energie': 0, 'conseil': 0 };
+    const statusCounts = { 'en_attente': 0, 'entretien': 0, 'accepte': 0, 'refuse': 0 };
+
+    // 3. Compter réellement les données depuis le tableau 'candidatures'
+    candidatures.forEach(c => {
+        // Comptage par Secteur
+        // On s'assure que c.sector existe et on le met en minuscule pour le test
+        const s = c.sector ? c.sector.toLowerCase() : '';
+        if (sectorCounts.hasOwnProperty(s)) {
+            sectorCounts[s]++;
+        }
+
+        // Comptage par Statut
+        if (statusCounts.hasOwnProperty(c.status)) {
+            statusCounts[c.status]++;
+        }
+    });
+
+    // --- Graphique Secteur (Doughnut) ---
+    const ctxSector = document.getElementById('sectorChart');
+    if (ctxSector) {
+        charts.sector = new Chart(ctxSector, {
+            type: 'doughnut',
+            data: {
+                labels: ['Tech / IT', 'Aéronautique', 'Énergie', 'Conseil'],
+                datasets: [{
+                    // On utilise les vraies valeurs calculées
+                    data: [
+                        sectorCounts['tech'], 
+                        sectorCounts['aero'], 
+                        sectorCounts['energie'], 
+                        sectorCounts['conseil']
+                    ],
+                    backgroundColor: ['#0f172a', '#3b82f6', '#22c55e', '#f59e0b'],
+                    borderWidth: 4,
+                    borderColor: '#ffffff',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+                }
+            }
+        });
+    }
+
+    // --- Graphique Statut (Barres Horizontales) ---
+    const ctxStatus = document.getElementById('statusChart');
+    if (ctxStatus) {
+        charts.status = new Chart(ctxStatus, {
+            type: 'bar',
+            data: {
+                labels: ['En attente', 'Entretien', 'Accepté', 'Refusé'],
+                datasets: [{
+                    label: 'Nombre de dossiers',
+                    data: [
+                        statusCounts['en_attente'], 
+                        statusCounts['entretien'], 
+                        statusCounts['accepte'], 
+                        statusCounts['refuse']
+                    ],
+                    backgroundColor: ['#94a3b8', '#3b82f6', '#22c55e', '#ef4444'],
+                    borderRadius: 6,
+                    barThickness: 20
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, grid: { color: '#e2e8f0' }, ticks: { stepSize: 1, color: '#64748b' } },
+                    y: { grid: { display: false }, ticks: { color: '#64748b' } }
+                }
+            }
+        });
+    }
+}
+    </script>
+</body>
+</html>

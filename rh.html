@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace Recruteur - ESTIA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: { 
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { 
+                        primary: '#0f172a', 
+                        accent: '#3b82f6',
+                    } 
+                } 
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .view { display: none; opacity: 0; transition: opacity 0.3s ease-in-out; }
+        .view.active { display: block; opacity: 1; }
+        
+        .nav-link { position: relative; color: #94a3b8; transition: all 0.3s; cursor: pointer; }
+        .nav-link:hover, .nav-link.active-link { color: #f8fafc; }
+        .nav-link.active-link::after {
+            content: ''; position: absolute; bottom: -20px; left: 0; width: 100%; height: 3px;
+            background-color: #3b82f6; border-radius: 3px 3px 0 0;
+        }
+
+        .tab-btn-recruiter { position: relative; color: #64748b; transition: all 0.2s; }
+        .tab-btn-recruiter:hover { color: #0f172a; }
+        .tab-btn-recruiter.active-tab { color: #0f172a; font-weight: 600; }
+        .tab-btn-recruiter.active-tab::after {
+            content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px;
+            background-color: #0f172a;
+        }
+
+        .modal { transition: opacity 0.2s ease-in-out; }
+        .modal-content { transform: scale(0.95); transition: transform 0.2s ease-in-out; }
+        .modal.flex .modal-content { transform: scale(1); }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+    <nav class="sticky top-0 z-50 bg-primary shadow-lg border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-10">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl font-bold tracking-tight text-white">ESTIA <span class="text-[10px] uppercase tracking-wider bg-white/10 text-white/80 px-2 py-0.5 rounded ml-1 font-medium">Recruteur</span></span>
+                    </div>
+                    <div class="hidden md:flex items-center gap-6">
+                        <button onclick="switchView('recruiter')" id="nav-recruiter" class="nav-link active-link flex items-center gap-2 text-sm font-medium">
+                            <i class="fa-solid fa-table-columns"></i> Tableau de bord
+                        </button>
+                        <button onclick="switchView('recruiter-profile')" id="nav-recruiter-profile" class="nav-link flex items-center gap-2 text-sm font-medium">
+                            <i class="fa-solid fa-user-tie"></i> Mon Profil
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-medium text-white" id="header-name">Chargement...</p>
+                        <p class="text-xs text-slate-400">Recruteur</p>
+                    </div>
+                    <div id="header-avatar" class="w-10 h-10 bg-gradient-to-br from-accent to-blue-700 rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-primary">RH</div>
+                    <button onclick="logout()" class="text-slate-400 hover:text-white transition p-2"><i class="fa-solid fa-right-from-bracket"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <section id="view-recruiter" class="view active">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-slate-900">Espace Recruteur</h1>
+                    <p class="text-slate-500 mt-1">Gérez les candidatures et vos annonces.</p>
+                </div>
+                <button onclick="openCreateJobModal()" class="group bg-primary hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-medium transition-all shadow-lg hover:shadow-xl flex items-center gap-2 transform hover:-translate-y-0.5">
+                    <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                    </div>
+                    Créer une offre
+                </button>
+            </div>
+            
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                <div class="border-b border-slate-200 px-6 flex gap-8 bg-slate-50/50 backdrop-blur-sm sticky top-0 z-10">
+                    <button id="btn-tab-candidatures" class="tab-btn-recruiter active-tab py-5 text-sm transition focus:outline-none" onclick="switchRecruiterTab('candidatures')">
+                        <i class="fa-solid fa-users-viewfinder mr-2"></i>Candidatures Reçues
+                        <span class="ml-2 bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full" id="badge-count-candidates">0</span>
+                    </button>
+                    <button id="btn-tab-offres" class="tab-btn-recruiter py-5 text-sm transition focus:outline-none" onclick="switchRecruiterTab('offres')">
+                        <i class="fa-solid fa-briefcase mr-2"></i>Mes Offres Actives
+                    </button>
+                </div>
+
+                <div id="recruiter-tab-candidatures" class="block min-h-[400px]">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50 border-b border-slate-200">
+                                    <th class="px-6 py-4 cursor-pointer hover:text-primary transition" onclick="handleSort('name')">Candidat <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
+                                    <th class="px-6 py-4">Poste visé</th>
+                                    <th class="px-6 py-4 text-center cursor-pointer hover:text-primary transition" onclick="handleSort('date')">Reçu le <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
+                                    <th class="px-6 py-4 text-center">CV</th>
+                                    <th class="px-6 py-4 text-center">Statut</th>
+                                    <th class="px-6 py-4 text-center">Contact</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recruiter-table-body" class="divide-y divide-slate-100">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="recruiter-tab-offres" class="hidden p-8 bg-slate-50/30">
+                    <div id="my-jobs-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-recruiter-profile" class="view">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Profil Recruteur</h1>
+                <p class="text-slate-500 mt-1">Vos informations visibles par les étudiants</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="bg-white border border-slate-200 rounded-2xl p-8 col-span-1 text-center shadow-sm h-fit">
+                    <div class="relative inline-block mb-4">
+                        <div id="rec-initials" class="w-28 h-28 bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600 rounded-full flex items-center justify-center text-4xl font-bold shadow-inner mx-auto border-4 border-white">RH</div>
+                        <div class="absolute bottom-1 right-1 w-6 h-6 bg-green-500 border-4 border-white rounded-full"></div>
+                    </div>
+                    <h2 id="rec-card-name" class="text-xl font-bold text-slate-900">...</h2>
+                    <p id="rec-card-role" class="text-slate-500 font-medium">Recruteur</p>
+                    
+                    <div class="mt-6 pt-6 border-t border-slate-100 grid grid-cols-2 gap-4 text-center">
+                        <div>
+                            <span id="count-jobs" class="block text-2xl font-bold text-primary">0</span>
+                            <span class="text-xs text-slate-400 uppercase font-semibold">Offres</span>
+                        </div>
+                        <div>
+                            <span id="count-candidates" class="block text-2xl font-bold text-primary">0</span>
+                            <span class="text-xs text-slate-400 uppercase font-semibold">Candidats</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-2xl p-8 col-span-1 lg:col-span-2 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-slate-900">Modifier les informations</h3>
+                        <span class="text-xs font-medium px-3 py-1 bg-green-100 text-green-700 rounded-full">Compte actif</span>
+                    </div>
+                    <form class="space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1.5">Nom complet</label>
+                                <input type="text" id="rec-name" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-accent focus:border-accent transition outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1.5">Email professionnel</label>
+                                <input type="email" id="rec-email" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-accent focus:border-accent transition outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1.5">Téléphone (Affichage)</label>
+                                <input type="text" id="rec-phone" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-accent focus:border-accent transition outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1.5">Poste (Affichage)</label>
+                                <input type="text" id="rec-role-input" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-accent focus:border-accent transition outline-none">
+                            </div>
+                        </div>
+                        <div class="pt-6 flex justify-end border-t border-slate-100 mt-2">
+                            <button type="button" onclick="saveProfile()" class="bg-primary hover:bg-primary-light text-white px-8 py-2.5 rounded-xl font-medium transition shadow-md hover:shadow-lg transform active:scale-95">Enregistrer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="modal-create-job" class="modal fixed inset-0 z-[100] hidden items-center justify-center">
+        <div class="absolute inset-0 bg-primary/40 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-0 relative z-10 overflow-hidden">
+            <div class="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 id="modal-title" class="font-bold text-xl text-slate-900">Publier une offre</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="p-8 space-y-5">
+                <input type="hidden" id="job-id">
+                
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Titre du poste</label>
+                    <input type="text" id="job-title" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-accent focus:border-accent outline-none transition" placeholder="ex: Ingénieur DevOps">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Contrat</label>
+                        <div class="relative">
+                            <select id="job-type" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-accent focus:border-accent outline-none appearance-none bg-white">
+                                <option value="Stage">Stage</option>
+                                <option value="Alternance">Alternance</option>
+                                <option value="CDI">CDI</option>
+                                <option value="CDD">CDD</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Secteur</label>
+                        <div class="relative">
+                            <select id="job-sector" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-accent focus:border-accent outline-none appearance-none bg-white">
+                                <option value="aero">Aéronautique</option>
+                                <option value="tech">Tech / IT</option>
+                                <option value="energie">Énergie</option>
+                                <option value="conseil">Conseil</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Lieu</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-location-dot absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="job-location" class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-accent focus:border-accent outline-none transition" placeholder="ex: Paris, Toulouse...">
+                    </div>
+                </div>
+                
+                <button onclick="submitJob()" class="w-full bg-primary hover:bg-slate-800 text-white py-3 rounded-xl font-bold mt-4 shadow-lg hover:shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-check"></i> Valider et Publier
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-generic" class="modal fixed inset-0 z-[100] hidden items-center justify-center">
+        <div class="absolute inset-0 bg-primary/60 backdrop-blur-sm transition-opacity" onclick="closeGenericModal()"></div>
+        <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-0 relative z-10 overflow-hidden transform scale-95 opacity-0 transition-all">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/80">
+                <h3 id="modal-generic-title" class="font-bold text-lg text-slate-900">Titre</h3>
+                <button onclick="closeGenericModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div id="modal-generic-content" class="p-6">
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-cv" class="modal fixed inset-0 z-[100] hidden items-center justify-center">
+        <div class="absolute inset-0 bg-primary/60 backdrop-blur-sm transition-opacity" onclick="closeCVModal()"></div>
+        <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 h-[80vh] flex flex-col relative z-10 transform scale-95 opacity-0 transition-all duration-300">
+
+            <input type="hidden" id="cv-hidden-candidate-id">
+            <input type="hidden" id="cv-hidden-job-id">
+            <input type="hidden" id="cv-hidden-position">
+
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-red-100 text-red-600 rounded-lg flex items-center justify-center"><i class="fa-solid fa-file-pdf text-xl"></i></div>
+                    <div><h3 class="font-bold text-slate-900" id="cv-candidate-name">Candidat</h3><p class="text-xs text-slate-500" id="cv-filename">document.pdf</p></div>
+                </div>
+                <button onclick="closeCVModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-200"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="flex-1 bg-slate-100 p-8 flex items-center justify-center">
+                <div class="bg-white p-10 shadow-lg text-center rounded-xl border border-slate-200">
+                    <i class="fa-solid fa-file-lines text-6xl text-slate-200 mb-4"></i>
+                    <h4 class="text-xl font-bold text-slate-800">Aperçu du CV</h4>
+                    <p class="text-slate-500 text-sm mt-2">Ceci est une simulation.</p>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t flex justify-end gap-3 rounded-b-2xl bg-white">
+                <button onclick="closeCVModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg transition">Fermer</button>
+                <button onclick="handleContact()" class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-blue-600 transition">Contacter</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-chat" class="fixed inset-0 z-[100] hidden items-center justify-center">
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onclick="closeChatModal()"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 relative z-10 overflow-hidden flex flex-col h-[600px] transform transition-all scale-100">
+            <input type="hidden" id="chat-target-id">
+            <input type="hidden" id="chat-job-id">
+            
+            <div class="px-6 py-4 border-b border-slate-100 bg-white flex justify-between items-center shadow-sm z-10">
+                <div class="flex items-center gap-3">
+                    <div id="chat-avatar" class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm">ET</div>
+                    <div>
+                        <h3 id="chat-candidate-name" class="font-bold text-slate-900 leading-tight">Candidat</h3>
+                        <p id="chat-position" class="text-xs text-slate-500">Candidature</p>
+                    </div>
+                </div>
+                <button onclick="closeChatModal()" class="text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-50 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50">
+                <div class="flex justify-center my-4">
+                    <span class="text-xs text-slate-400 bg-slate-200 px-3 py-1 rounded-full">Début de conversation</span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-xs shrink-0">ET</div>
+                    <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-slate-700 max-w-[80%] border border-slate-100">
+                        Bonjour, je suis très intéressé par votre offre. Voici mon CV !
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-white border-t border-slate-100">
+                <form onsubmit="sendRecruiterMessage(event)" class="flex gap-2">
+                    <input type="text" id="chat-input" placeholder="Écrivez votre réponse..." class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition text-sm">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl transition shadow-md flex items-center justify-center w-12">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-notification" class="fixed inset-0 z-[200] hidden items-end justify-center sm:items-start sm:justify-end p-6 pointer-events-none">
+        <div id="notif-content" class="bg-white border-l-4 border-accent shadow-2xl rounded-lg p-6 w-full max-w-sm pointer-events-auto flex flex-col gap-3">
+            
+            <div class="flex items-start gap-4">
+                <div id="notif-icon" class="text-2xl text-accent pt-1">
+                    <i class="fa-solid fa-bell"></i>
+                </div>
+                <div class="flex-1">
+                    <h4 id="notif-title" class="font-bold text-slate-900 text-lg mb-1">Titre</h4>
+                    <p id="notif-message" class="text-slate-600 text-sm">Message contenu...</p>
+                </div>
+                <button onclick="closeNotification()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <button id="notif-action-btn" class="hidden w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold py-2 rounded-lg transition shadow-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-comments"></i> Voir la conversation
+            </button>
+
+        </div>
+    </div>
+
+    <script>
+        // --- DONNÉES GLOBALES ---
+        let recruiterInfo = {};
+        let jobs = [];
+        let candidates = [];
+        let currentSort = { col: 'date', order: 'desc' };
+
+        // --- INITIALISATION ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkSession();
+            await fetchMyJobs();
+            await fetchCandidates();
+        });
+
+        // 1. SESSION
+        async function checkSession() {
+            try {
+                const res = await fetch('api.php?action=check_session');
+                const data = await res.json();
+                if(!data.logged_in || data.user.role !== 'recruiter') {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                recruiterInfo = data.user;
+                updateUI();
+            } catch(e) { console.error(e); }
+        }
+
+        async function logout() {
+            await fetch('api.php?action=logout');
+            window.location.href = 'login.html';
+        }
+
+        // 2. JOBS (API)
+        async function fetchMyJobs() {
+            try {
+                const res = await fetch('api.php?action=get_jobs&my_jobs=1');
+                jobs = await res.json();
+                renderJobs();
+                updateStats();
+            } catch(e) { console.error(e); }
+        }
+
+        // 3. CANDIDATS (API)
+        async function fetchCandidates() {
+            try {
+                const res = await fetch('api.php?action=get_applications');
+                candidates = await res.json();
+                renderCandidates();
+                updateStats();
+            } catch(e) { console.error(e); }
+        }
+
+        // --- FONCTIONS UI ---
+        function updateUI() {
+            const name = recruiterInfo.name || 'Recruteur';
+            const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+            document.getElementById('header-name').textContent = name;
+            document.getElementById('header-avatar').textContent = initials;
+            document.getElementById('rec-card-name').textContent = name;
+            document.getElementById('rec-initials').textContent = initials;
+            
+            // Remplissage formulaire
+            document.getElementById('rec-name').value = name;
+            document.getElementById('rec-email').value = recruiterInfo.email || '';
+            document.getElementById('rec-phone').value = recruiterInfo.phone || '';
+            // Note: le rôle est fixe en BDD, on l'affiche juste
+            document.getElementById('rec-role-input').value = "Recruteur"; 
+        }
+
+        function updateStats() {
+            const elJobs = document.getElementById('count-jobs');
+            const elCands = document.getElementById('count-candidates');
+            if(elJobs) elJobs.textContent = jobs.length;
+            if(elCands) elCands.textContent = candidates.length;
+
+            const badgeCand = document.getElementById('badge-count-candidates');
+            if(badgeCand) badgeCand.textContent = candidates.length;
+        }
+
+        async function saveProfile() {
+            const name = document.getElementById('rec-name').value;
+            const email = document.getElementById('rec-email').value;
+            // Pour le téléphone, comme l'API simple ne le gère pas forcément par défaut, 
+            // on envoie quand même, mais on met surtout à jour la vue locale.
+            // (Si vous modifiez l'API pour update_user avec phone, ça marchera)
+            const phone = document.getElementById('rec-phone').value;
+            
+            try {
+                const res = await fetch('api.php?action=update_user', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        id: recruiterInfo.id, 
+                        name: name, 
+                        email: email, 
+                        phone: phone, // Tentative d'envoi
+                        role: 'recruiter', 
+                        status: 'active' 
+                    })
+                });
+                const result = await res.json();
+                
+                if(result.success) {
+                    recruiterInfo.name = name;
+                    recruiterInfo.email = email;
+                    recruiterInfo.phone = phone;
+                    updateUI();
+                    
+                    showModal("Succès", `
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-check"></i></div>
+                            <p class="text-lg font-bold text-slate-800">Profil mis à jour !</p>
+                            <button onclick="closeGenericModal()" class="mt-6 px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition">OK</button>
+                        </div>
+                    `);
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active-link'));
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            document.getElementById(`nav-${viewId}`).classList.add('active-link');
+        }
+
+        function switchRecruiterTab(tab) {
+            const c = document.getElementById('recruiter-tab-candidatures');
+            const o = document.getElementById('recruiter-tab-offres');
+            const b1 = document.getElementById('btn-tab-candidatures');
+            const b2 = document.getElementById('btn-tab-offres');
+            
+            if(tab === 'candidatures') { 
+                c.classList.remove('hidden'); o.classList.add('hidden'); 
+                b1.classList.add('active-tab'); b2.classList.remove('active-tab'); 
+            } else { 
+                c.classList.add('hidden'); o.classList.remove('hidden'); 
+                b1.classList.remove('active-tab'); b2.classList.add('active-tab'); 
+            }
+        }
+
+        // --- TABLEAU CANDIDATS ---
+        function renderCandidates() {
+            const tbody = document.getElementById('recruiter-table-body');
+            const styles = {
+                nouveau:   { row: 'bg-amber-50/60 hover:bg-amber-100/50', badge: 'bg-amber-100 text-amber-800 ring-amber-600/20' },
+                entretien: { row: 'bg-blue-50/60 hover:bg-blue-100/50',   badge: 'bg-blue-100 text-blue-800 ring-blue-600/20' },
+                accepte:   { row: 'bg-green-50/60 hover:bg-green-100/50', badge: 'bg-green-100 text-green-800 ring-green-600/20' },
+                refuse:    { row: 'bg-red-50/60 hover:bg-red-100/50',     badge: 'bg-red-100 text-red-800 ring-red-600/20' },
+                en_attente:{ row: 'bg-slate-50/60 hover:bg-slate-100/50',  badge: 'bg-slate-100 text-slate-800 ring-slate-600/20' }
+            };
+
+            if(candidates.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-slate-500">Aucune candidature reçue pour le moment.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = candidates.map(c => {
+                const style = styles[c.status] || styles.en_attente;
+                const name = c.candidate_name || 'Inconnu';
+                const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+                return `
+                <tr class="${style.row} transition group border-b border-slate-100 last:border-0 group">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                                ${initials}
+                            </div>
+                            <div>
+                                <div class="font-bold text-slate-800">${name}</div>
+                                <div class="text-xs text-slate-500">${c.email}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-sm font-medium text-slate-600">${c.position}</td>
+                    <td class="px-6 py-4 text-center text-sm text-slate-500">${new Date(c.date).toLocaleDateString('fr-FR')}</td>
+                    <td class="px-6 py-4 text-center">
+                        <button onclick="openCandidateCV('${name}', ${c.candidate_user_id}, ${c.job_id}, '${c.position}')" class="text-xs bg-white hover:bg-white/80 text-slate-600 px-3 py-1.5 rounded-full border border-slate-200 shadow-sm transition flex items-center gap-2 mx-auto">
+                            <i class="fa-solid fa-file-pdf text-red-500"></i> PDF
+                        </button>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <div class="relative inline-block w-full max-w-[140px]">
+                            <select onchange="updateStatus(${c.id}, this.value)" 
+                                class="w-full text-xs font-bold py-1.5 pl-3 pr-8 rounded-full appearance-none cursor-pointer text-left outline-none transition-colors ring-1 ${style.badge}">
+                                <option value="en_attente" ${c.status === 'en_attente' ? 'selected' : ''}>En attente</option>
+                                <option value="entretien" ${c.status === 'entretien' ? 'selected' : ''}>Entretien</option>
+                                <option value="accepte" ${c.status === 'accepte' ? 'selected' : ''}>Accepté</option>
+                                <option value="refuse" ${c.status === 'refuse' ? 'selected' : ''}>Refusé</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-current opacity-60">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <div class="flex justify-center gap-2 opacity-60 group-hover:opacity-100 transition">
+                            <a href="mailto:${c.email}" class="w-8 h-8 rounded-full bg-white border border-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition shadow-sm" title="Email">
+                                <i class="fa-solid fa-envelope"></i>
+                            </a>
+                            <button onclick="openChatModal('${c.candidate_user_id}', '${name}', '${c.position}', '${initials}', ${c.job_id})" class="w-8 h-8 rounded-full bg-white border border-indigo-100 text-indigo-600 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition shadow-sm" title="Message">
+                                <i class="fa-solid fa-comments"></i>
+                            </button>
+                            <a href="tel:${c.phone}" class="w-8 h-8 rounded-full bg-white border border-green-100 text-green-600 flex items-center justify-center hover:bg-green-600 hover:text-white transition shadow-sm" title="Appeler">
+                                <i class="fa-solid fa-phone"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        let chatInterval = null; 
+        let currentJobId = null; // Nouvelle variable
+
+        // Ajout de jobId en paramètre
+        async function openChatModal(candidateId, name, position, initials, jobId) {
+            document.getElementById('chat-target-id').value = candidateId;
+            currentJobId = jobId; // Stockage
+            document.getElementById('chat-job-id').value = jobId; // Stockage input caché
+
+            document.getElementById('chat-candidate-name').textContent = name;
+            document.getElementById('chat-position').textContent = position;
+            document.getElementById('chat-avatar').textContent = initials;
+            
+            await loadMessages();
+
+            if (chatInterval) clearInterval(chatInterval);
+            chatInterval = setInterval(loadMessages, 3000);
+
+            const m = document.getElementById('modal-chat');
+            m.classList.remove('hidden'); m.classList.add('flex');
+            
+            setTimeout(() => document.getElementById('chat-input').focus(), 100);
+        }
+
+        async function loadMessages() {
+            const targetId = document.getElementById('chat-target-id').value;
+            // On utilise la variable globale currentJobId ou l'input caché
+            const jobId = currentJobId || document.getElementById('chat-job-id').value;
+            
+            if (!targetId || !jobId) return;
+
+            try {
+                // Ajout de &job_id dans l'URL
+                const res = await fetch(`api.php?action=get_messages&contact_id=${targetId}&job_id=${jobId}`);
+                const messages = await res.json();
+                
+                const container = document.getElementById('chat-messages');
+                container.innerHTML = ''; 
+
+                if (messages.length === 0) {
+                    container.innerHTML = '<p class="text-center text-slate-400 text-sm mt-4">Démarrez la conversation pour ce poste.</p>';
+                    return;
+                }
+
+                messages.forEach(msg => {
+                    const isMe = (parseInt(msg.sender_id) === parseInt(recruiterInfo.id));
+                    
+                    const alignClass = isMe ? 'justify-end' : 'justify-start';
+                    const bubbleColor = isMe ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-700 border border-slate-200 rounded-tl-none';
+                    const avatar = isMe ? '' : `<div class="w-8 h-8 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold text-xs shrink-0 mr-2">ET</div>`;
+
+                    container.innerHTML += `
+                        <div class="flex ${alignClass} mb-3 animate-fade-in">
+                            ${!isMe ? avatar : ''}
+                            <div class="${bubbleColor} p-3 rounded-2xl shadow-sm text-sm max-w-[80%]">
+                                ${msg.message}
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (e) { console.error("Erreur chat", e); }
+        }
+
+        function closeChatModal() {
+            // 1. Arrêt du timer
+            if (chatInterval) {
+                clearInterval(chatInterval);
+                chatInterval = null;
+            }
+
+            // 2. Masquer le HTML
+            const m = document.getElementById('modal-chat');
+            if (m) {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+            }
+            
+            // 3. Reset
+            // (Assurez-vous que ces variables existent ou retirez ces lignes si elles provoquent une erreur)
+            if (typeof document.getElementById('chat-target-id') !== 'undefined') {
+                document.getElementById('chat-target-id').value = '';
+            }
+        }
+
+        async function sendRecruiterMessage(event) {
+            event.preventDefault();
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            const targetId = document.getElementById('chat-target-id').value;
+            const jobId = document.getElementById('chat-job-id').value; // Récupération ID
+
+            if (message && targetId && jobId) {
+                try {
+                    await fetch('api.php?action=send_message', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        // Envoi du job_id
+                        body: JSON.stringify({ 
+                            receiver_id: targetId, 
+                            message: message,
+                            job_id: jobId 
+                        })
+                    });
+                    
+                    input.value = ""; 
+                    loadMessages();   
+                    
+                    const container = document.getElementById('chat-messages');
+                    setTimeout(() => container.scrollTop = container.scrollHeight, 100);
+
+                } catch (e) { console.error("Erreur envoi", e); }
+            }
+        }
+
+        // --- SYSTÈME DE NOTIFICATIONS (RECRUTEUR) ---
+
+        // Lancer la vérification toutes les 5 secondes
+        setInterval(checkNotifications, 5000);
+
+        async function checkNotifications() {
+            try {
+                const res = await fetch('api.php?action=check_notifications');
+                const notifications = await res.json();
+
+                if (notifications && notifications.length > 0) {
+                    const notif = notifications[notifications.length - 1];
+                    // Afficher la notification avec les data
+                    showNotificationModal(notif.type, notif.title, notif.message, notif.data);
+                    
+                    // Recharger la liste des candidats pour voir les mises à jour (ex: nouveaux statuts)
+                    fetchCandidates(); 
+                }
+            } catch(e) { console.error("Erreur polling notifs", e); }
+        }
+
+        function showNotificationModal(type, title, message, dataJson) {
+            const modal = document.getElementById('modal-notification');
+            const content = document.getElementById('notif-content');
+            const icon = document.getElementById('notif-icon');
+            const btn = document.getElementById('notif-action-btn');
+
+            document.getElementById('notif-title').textContent = title;
+            document.getElementById('notif-message').textContent = message;
+
+            // Reset visuel
+            content.className = content.className.replace(/border-\w+-\d+/, '');
+            btn.classList.add('hidden'); 
+
+            if (type === 'message') {
+                // STYLE MESSAGE
+                icon.innerHTML = '<i class="fa-solid fa-comments"></i>';
+                icon.className = 'text-2xl pt-1 text-indigo-600';
+                content.classList.add('border-indigo-600');
+
+                // LOGIQUE DU BOUTON
+                if (dataJson) {
+                    try {
+                        const data = (typeof dataJson === 'string') ? JSON.parse(dataJson) : dataJson;
+                        
+                        // Calcul des initiales du candidat
+                        // Attention : ici 'data.name' est le nom de l'étudiant (envoyé par send_message)
+                        const initials = data.name ? data.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'ET';
+
+                        btn.onclick = function() {
+                            // Appel de openChatModal avec les paramètres Recruteur
+                            // Signature: openChatModal(candidateId, name, position, initials, jobId)
+                            // Note: 'data.recruiter_id' ici correspond en fait à l'ID de l'expéditeur (donc l'étudiant)
+                            // Il faut s'assurer que api.php envoie les bonnes clés dans 'actionData'
+                            
+                            // Pour simplifier, on suppose que l'API envoie :
+                            // recruiter_id (qui est l'ID de l'étudiant expéditeur ici)
+                            // name (nom étudiant)
+                            // position (le poste, ou company qui est détourné)
+                            // job_id
+                            
+                            // Adaptez selon ce que votre API envoie réellement dans 'send_message' (partie $actionData)
+                            // Si vous n'avez pas changé l'API, data.recruiter_id contient l'ID de l'expéditeur
+                            
+                            openChatModal(data.recruiter_id, data.name, "Candidature", initials, data.job_id);
+                            closeNotification();
+                        };
+                        btn.classList.remove('hidden');
+                    } catch (e) { console.error(e); }
+                }
+
+            } else {
+                // Autres types (ex: nouvelle candidature si vous l'implémentez)
+                icon.innerHTML = '<i class="fa-solid fa-bell"></i>';
+                icon.className = 'text-2xl pt-1 text-blue-600';
+                content.classList.add('border-blue-600');
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeNotification() {
+            document.getElementById('modal-notification').classList.add('hidden');
+        }
+
+        async function updateStatus(id, val) {
+            // Mise à jour API
+            await fetch('api.php?action=update_status', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id: id, status: val })
+            });
+            // Rechargement pour mettre à jour les couleurs
+            fetchCandidates();
+        }
+
+        function handleSort(col) {
+            // Note: Le tri local sur les données API
+            currentSort.order = (currentSort.col === col && currentSort.order === 'asc') ? 'desc' : 'asc';
+            currentSort.col = col;
+            
+            candidates.sort((a,b) => {
+                // Mapping pour gérer les noms différents API/JS
+                let valA = (col === 'name') ? (a.candidate_name || '') : a[col];
+                let valB = (col === 'name') ? (b.candidate_name || '') : b[col];
+                
+                if(valA < valB) return currentSort.order === 'asc' ? -1 : 1;
+                if(valA > valB) return currentSort.order === 'asc' ? 1 : -1;
+                return 0;
+            });
+            renderCandidates();
+        }
+
+        // --- GESTION OFFRES ---
+        function renderJobs() {
+            const grid = document.getElementById('my-jobs-grid');
+            if (jobs.length === 0) { grid.innerHTML = '<p class="text-center col-span-2 text-slate-500 py-8">Aucune offre active.</p>'; return; }
+            
+            grid.innerHTML = jobs.map(j => `
+                <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-lg transition group relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-accent"></div>
+                    <div class="flex justify-between mb-3 pl-3">
+                        <div class="flex gap-2">
+                            <span class="text-[10px] font-bold uppercase px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full">${j.type}</span>
+                            <span class="text-[10px] font-bold uppercase px-2.5 py-1 bg-slate-50 text-slate-600 rounded-full">${j.sector || 'Autre'}</span>
+                        </div>
+                        <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                            <button onclick="editJob(${j.id})" class="text-slate-400 hover:text-blue-600"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteJob(${j.id})" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <h3 class="font-bold text-lg text-slate-800 pl-3">${j.title}</h3>
+                    <p class="text-sm text-slate-500 mb-6 pl-3"><i class="fa-solid fa-location-dot text-slate-300"></i> ${j.location}</p>
+                    <div class="pl-3 mt-auto pt-4 border-t flex justify-between text-sm">
+                        <span class="text-slate-400">Publié le ${new Date(j.created_at).toLocaleDateString()}</span>
+                        <span class="text-accent font-semibold cursor-pointer hover:underline" onclick="openJobDetails(${j.id})">Détails</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- MODALES (JOB) ---
+        function openCreateJobModal() {
+            document.getElementById('job-id').value = "";
+            document.getElementById('job-title').value = "";
+            document.getElementById('job-location').value = "";
+            document.getElementById('job-type').selectedIndex = 0;
+            document.getElementById('job-sector').selectedIndex = 0;
+            document.getElementById('modal-title').innerText = "Publier une offre";
+            document.getElementById('modal-create-job').classList.remove('hidden');
+            document.getElementById('modal-create-job').classList.add('flex');
+        }
+        function closeModal() {
+            document.getElementById('modal-create-job').classList.add('hidden');
+            document.getElementById('modal-create-job').classList.remove('flex');
+        }
+        
+        async function submitJob() {
+            const id = document.getElementById('job-id').value;
+            const title = document.getElementById('job-title').value;
+            const location = document.getElementById('job-location').value;
+            const type = document.getElementById('job-type').value;
+            const sector = document.getElementById('job-sector').value;
+
+            if (!title || !location) return alert("Remplissez tous les champs");
+
+            try {
+                const res = await fetch('api.php?action=save_job', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ id, title, location, type, sector })
+                });
+                
+                const result = await res.json();
+
+                if (result.success) {
+                    // 1. Fermer le formulaire de création
+                    closeModal();
+                    
+                    // 2. Recharger la liste des offres
+                    fetchMyJobs();
+
+                    // 3. Déterminer le message (Création ou Modification ?)
+                    const actionText = id ? "modifiée" : "publiée";
+                    const titleText = id ? "Offre modifiée" : "Offre publiée";
+
+                    // 4. Afficher la modale de confirmation
+                    showModal("Succès", `
+                        <div class="text-center py-4">
+                            <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl shadow-sm">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-slate-900 mb-2">${titleText} !</h3>
+                            <p class="text-slate-500 mb-8">
+                                L'offre <strong>${title}</strong> a bien été ${actionText}.<br>
+                                Elle est maintenant visible par les étudiants.
+                            </p>
+                            <button onclick="closeGenericModal()" class="px-8 py-3 bg-primary text-white rounded-xl font-bold hover:bg-slate-800 shadow-lg hover:shadow-xl transition transform active:scale-95">
+                                Ok
+                            </button>
+                        </div>
+                    `);
+                } else {
+                    alert("Erreur lors de l'enregistrement.");
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Erreur de connexion.");
+            }
+        }
+
+        function editJob(id) {
+            const job = jobs.find(j => j.id == id);
+            if (!job) return;
+            document.getElementById('job-id').value = job.id;
+            document.getElementById('job-title').value = job.title;
+            document.getElementById('job-location').value = job.location;
+            document.getElementById('job-type').value = job.type;
+            if(job.sector) document.getElementById('job-sector').value = job.sector;
+            
+            document.getElementById('modal-title').innerText = "Modifier l'offre";
+            document.getElementById('modal-create-job').classList.remove('hidden');
+            document.getElementById('modal-create-job').classList.add('flex');
+        }
+
+        // 1. OUVRE LA MODALE DE CONFIRMATION
+        function deleteJob(id) {
+            const content = `
+                <div class="text-center py-4">
+                    <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Êtes-vous sûr ?</h3>
+                    <p class="text-slate-500 mt-2 mb-6">
+                        Vous êtes sur le point de supprimer cette offre.<br>
+                        <span class="font-bold text-red-500">Attention :</span> Toutes les candidatures liées seront également supprimées définitivement.
+                    </p>
+                    <div class="flex justify-center gap-3">
+                        <button onclick="closeGenericModal()" class="px-5 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-medium hover:bg-slate-50 transition">
+                            Annuler
+                        </button>
+                        <button onclick="confirmDeleteJob(${id})" class="px-5 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 shadow-md transition flex items-center gap-2">
+                            <i class="fa-solid fa-trash"></i> Supprimer
+                        </button>
+                    </div>
+                </div>
+            `;
+            // On utilise ta fonction existante showModal
+            showModal("Confirmation", content);
+        }
+
+        // 2. EFFECTUE LA SUPPRESSION (Appelé par le bouton rouge)
+        async function confirmDeleteJob(id) {
+            // On ferme la modale de confirmation
+
+            try {
+                const res = await fetch(`api.php?action=delete_job&id=${id}`);
+                const result = await res.json();
+
+                if(result.success) {
+                    // Mise à jour de l'interface
+                    await fetchMyJobs();     // Recharge les offres
+                    await fetchCandidates(); // Recharge les candidats (qui ont été supprimés en cascade)
+                    
+                    // Affiche un message de succès
+                    showModal("Succès", `
+                        <div class="text-center py-4">
+                            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <p class="text-lg font-bold text-slate-800">Offre supprimée</p>
+                            <p class="text-slate-500 mt-2">L'offre et ses candidatures ont été effacées.</p>
+                            <button onclick="closeGenericModal()" class="mt-6 px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition">OK</button>
+                        </div>
+                    `);
+                } else {
+                    alert("Erreur lors de la suppression");
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        // --- GESTION MODALE GENERIC (Détails) ---
+        function openJobDetails(jobId) {
+            // CORRECTION ICI : Utiliser '==' au lieu de '===' pour comparer "5" et 5
+            const job = jobs.find(j => j.id == jobId);
+            
+            if (!job) {
+                console.error("Offre non trouvée pour l'ID :", jobId);
+                return;
+            }
+
+            const content = `
+                <div class="space-y-4">
+                    <div class="flex items-center gap-4 border-b border-slate-100 pb-4">
+                        <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-bold text-2xl">
+                            ${job.company[0]}
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-lg">${job.title}</h4>
+                            <p class="text-slate-500">${job.company} • ${job.location}</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div><span class="text-slate-400">Contrat:</span> <span class="font-medium text-slate-900">${job.type}</span></div>
+                        <div><span class="text-slate-400">Secteur:</span> <span class="font-medium text-slate-900 capitalize">${job.sector || 'N/A'}</span></div>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-lg text-sm text-slate-600 leading-relaxed">
+                        <p><strong>Description :</strong> Ceci est une simulation.</p>
+                    </div>
+                    <div class="pt-4 flex gap-3">
+                        <button onclick="closeGenericModal()" class="flex-1 border border-slate-300 text-slate-700 font-medium py-3 rounded-lg hover:bg-slate-50 transition">Retour</button>
+                        <button onclick="closeGenericModal(); editJob(${job.id})" class="flex-1 bg-primary hover:bg-slate-800 text-white font-bold py-3 rounded-lg transition shadow-md">Modifier l'offre</button>
+                    </div>
+                </div>
+            `;
+            showModal("Détails de l'offre", content);
+        }
+
+        function showModal(title, contentHtml) {
+            const m = document.getElementById('modal-generic');
+            document.getElementById('modal-generic-title').innerText = title;
+            document.getElementById('modal-generic-content').innerHTML = contentHtml;
+            m.classList.remove('hidden'); m.classList.add('flex');
+            setTimeout(() => { m.querySelector('.modal-content').classList.remove('scale-95', 'opacity-0'); m.querySelector('.modal-content').classList.add('scale-100', 'opacity-100'); }, 10);
+        }
+        function closeGenericModal() {
+            const m = document.getElementById('modal-generic');
+            m.querySelector('.modal-content').classList.remove('scale-100', 'opacity-100');
+            m.querySelector('.modal-content').classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { m.classList.add('hidden'); m.classList.remove('flex'); }, 200);
+        }
+        
+        // --- MODALE CV ---
+        function openCandidateCV(name, candidateId, jobId, position) {
+            const m = document.getElementById('modal-cv');
+            const c = m.querySelector('.modal-content');
+            
+            // 1. Remplir les infos visibles
+            document.getElementById('cv-candidate-name').textContent = name;
+            document.getElementById('cv-filename').textContent = `CV_${name.replace(/\s/g,'_')}.pdf`;
+            
+            // 2. STOCKER les infos invisibles (ID, JobID, Poste)
+            document.getElementById('cv-hidden-candidate-id').value = candidateId;
+            document.getElementById('cv-hidden-job-id').value = jobId;
+            document.getElementById('cv-hidden-position').value = position;
+
+            // 3. Afficher la modale
+            m.classList.remove('hidden'); m.classList.add('flex');
+            setTimeout(() => { c.classList.remove('scale-95', 'opacity-0'); c.classList.add('scale-100', 'opacity-100'); }, 10);
+        }
+        function closeCVModal() {
+            const m = document.getElementById('modal-cv');
+            const c = m.querySelector('.modal-content');
+            c.classList.remove('scale-100', 'opacity-100');
+            c.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { m.classList.add('hidden'); m.classList.remove('flex'); }, 200);
+        }
+
+        // --- NOUVELLE FONCTION CONTACT ---
+        function handleContact() {
+            // 1. Fermer le CV
+            closeCVModal();
+            
+            // 2. Récupérer les infos stockées
+            const name = document.getElementById('cv-candidate-name').textContent;
+            const candidateId = document.getElementById('cv-hidden-candidate-id').value;
+            const jobId = document.getElementById('cv-hidden-job-id').value;
+            const position = document.getElementById('cv-hidden-position').value;
+            
+            // Calcul des initiales
+            const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            
+            // 3. Ouvrir le chat avec les bons paramètres
+            // Signature: openChatModal(candidateId, name, position, initials, jobId)
+            openChatModal(candidateId, name, position, initials, jobId);
+        }
+    </script>
+</body>
+</html>
