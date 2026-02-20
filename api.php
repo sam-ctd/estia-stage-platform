@@ -6,72 +6,78 @@ require 'db.php';
 $action = $_GET['action'] ?? '';
 $input = json_decode(file_get_contents('php://input'), true);
 
-// 1. AUTHENTIFICATION
+// Connexion
 if ($action === 'login') {
     $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
     $stmt->execute([$input['email']]);
     $user = $stmt->fetch();
 
     if ($user && ($input['password'] === $user['password'] || password_verify($input['password'], $user['password']))) {
-        
         if ($user['status'] === 'pending' || $user['status'] === 'inactive') {
-            echo json_encode(['success' => false, 'message' => 'Votre compte est en attente de validation ou inactif. Contactez l\'administrateur.']);
+            echo json_encode(['success' => false, 'message' => 'Compte inactif ou en attente.']);
             exit;
         }
 
+        // On ne stocke pas le mdp en session
+        unset($user['password']);
+        
         $_SESSION['user'] = $user;
         echo json_encode(['success' => true, 'role' => $user['role'], 'user' => $user]);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Email ou mot de passe incorrect']);
+        echo json_encode(['success' => false, 'message' => 'Identifiants incorrects.']);
     }
     exit;
 }
 
+// Inscription
 if ($action === 'signup') {
     $hash = password_hash($input['password'], PASSWORD_DEFAULT);
-    
-    // MODIFICATION ICI : On ajoute le champ 'company'
-    $stmt = $pdo->prepare("INSERT INTO users (name, email, password, role, company, status) VALUES (?, ?, ?, ?, ?, 'active')");
-    
-    // On récupère le nom de l'entreprise si c'est un recruteur, sinon NULL
     $company = ($input['role'] === 'recruiter' && !empty($input['company'])) ? $input['company'] : null;
 
+    $stmt = $pdo->prepare("INSERT INTO users (name, email, password, role, company, status) VALUES (?, ?, ?, ?, ?, 'active')");
+    
     try {
         $stmt->execute([$input['name'], $input['email'], $hash, $input['role'], $company]);
         echo json_encode(['success' => true]);
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => 'Cet email est déjà utilisé.']);
+        echo json_encode(['success' => false, 'message' => 'Email déjà utilisé.']);
     }
     exit;
 }
 
+// Déconnexion
 if ($action === 'logout') {
     session_destroy();
     echo json_encode(['success' => true]);
     exit;
 }
 
+// Vérifier si session active
 if ($action === 'check_session') {
     if (isset($_SESSION['user'])) {
-        // On recharge les infos fraîches depuis la BDD au cas où
         $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
         $stmt->execute([$_SESSION['user']['id']]);
         $freshUser = $stmt->fetch();
-        $_SESSION['user'] = $freshUser; // Mise à jour session
-
-        echo json_encode(['logged_in' => true, 'user' => $freshUser]);
+        
+        if($freshUser) {
+            unset($freshUser['password']);
+            $_SESSION['user'] = $freshUser; 
+            echo json_encode(['logged_in' => true, 'user' => $freshUser]);
+        } else {
+            echo json_encode(['logged_in' => false]);
+        }
     } else {
         echo json_encode(['logged_in' => false]);
     }
     exit;
 }
 
-// 2. GESTION DES OFFRES
+// Liste des offres
 if ($action === 'get_jobs') {
-    if (isset($_GET['my_jobs']) && isset($_SESSION['user'])) {
+    if (isset($_GET['my_jobs']) && isset($_SESSION['user']) && $_SESSION['user']['role'] === 'recruiter') {
         $stmt = $pdo->prepare("SELECT * FROM jobs WHERE recruiter_id = ? ORDER BY created_at DESC");
         $stmt->execute([$_SESSION['user']['id']]);
-    } elseif (isset($_GET['admin'])) {
+    } elseif (isset($_GET['admin']) && isset($_SESSION['user']) && $_SESSION['user']['role'] === 'admin') {
         $stmt = $pdo->query("SELECT * FROM jobs ORDER BY created_at DESC");
     } else {
         $stmt = $pdo->query("SELECT * FROM jobs WHERE status = 'published' ORDER BY created_at DESC");
@@ -80,18 +86,15 @@ if ($action === 'get_jobs') {
     exit;
 }
 
+// Créer ou modifier une offre
 if ($action === 'save_job') {
-    if (!isset($_SESSION['user'])) exit;
+    if (!isset($_SESSION['user']) || $_SESSION['user']['role'] === 'student') exit;
     
     if (!empty($input['id'])) {
-        // Update
         $stmt = $pdo->prepare("UPDATE jobs SET title=?, type=?, location=?, sector=? WHERE id=?");
         $stmt->execute([$input['title'], $input['type'], $input['location'], $input['sector'], $input['id']]);
     } else {
-        // Insert
-        // MODIFICATION ICI : On utilise le nom d'entreprise stocké dans la session de l'utilisateur
         $companyName = $_SESSION['user']['company'] ?? 'Entreprise'; 
-
         $stmt = $pdo->prepare("INSERT INTO jobs (recruiter_id, title, company, type, location, sector, status) VALUES (?, ?, ?, ?, ?, ?, 'published')");
         $stmt->execute([$_SESSION['user']['id'], $input['title'], $companyName, $input['type'], $input['location'], $input['sector']]);
     }
@@ -99,12 +102,13 @@ if ($action === 'save_job') {
     exit;
 }
 
+// Supprimer une offre et ses candidatures
 if ($action === 'delete_job') {
-    // 1. D'abord supprimer les candidatures liées à cette offre
+    if (!isset($_SESSION['user']) || $_SESSION['user']['role'] === 'student') exit;
+
     $stmtApps = $pdo->prepare("DELETE FROM applications WHERE job_id = ?");
     $stmtApps->execute([$_GET['id']]);
 
-    // 2. Ensuite supprimer l'offre elle-même
     $stmtJob = $pdo->prepare("DELETE FROM jobs WHERE id = ?");
     $stmtJob->execute([$_GET['id']]);
     
@@ -112,21 +116,27 @@ if ($action === 'delete_job') {
     exit;
 }
 
+// Valider offre admin
 if ($action === 'validate_job') {
+    if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') exit;
+
     $stmt = $pdo->prepare("UPDATE jobs SET status = 'published' WHERE id = ?");
     $stmt->execute([$input['id']]);
     echo json_encode(['success' => true]);
     exit;
 }
 
-// 3. CANDIDATURES
+// Ajouter une candidature
 if ($action === 'apply') {
-    if (!isset($_SESSION['user'])) { echo json_encode(['success'=>false, 'message'=>'Non connecté']); exit; }
+    if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'student') { 
+        echo json_encode(['success'=>false, 'message'=>'Accès non autorisé']); exit; 
+    }
     
     $check = $pdo->prepare("SELECT id FROM applications WHERE user_id=? AND job_id=?");
     $check->execute([$_SESSION['user']['id'], $input['job_id']]);
+    
     if($check->fetch()) {
-        echo json_encode(['success'=>false, 'message'=>'Déjà postulé']);
+        echo json_encode(['success'=>false, 'message'=>'Candidature déjà existante']);
         exit;
     }
 
@@ -136,6 +146,7 @@ if ($action === 'apply') {
     exit;
 }
 
+// Liste des candidatures
 if ($action === 'get_applications') {
     if (!isset($_SESSION['user'])) exit;
 
@@ -152,11 +163,10 @@ if ($action === 'get_applications') {
         $stmt->execute([$_SESSION['user']['id']]);
     } 
     else {
-        // Ajout des infos recruteur pour l'étudiant (pour l'onglet contact)
         $sql = "SELECT a.*, 
-                        u.id as recruiter_id, j.company, j.title as position, j.type, j.sector, 
-                        a.date as date,
-                        u.name as recruiter_name, u.email as recruiter_email, u.phone as recruiter_phone
+                    u.id as recruiter_id, j.company, j.title as position, j.type, j.sector, 
+                    a.date as date,
+                    u.name as recruiter_name, u.email as recruiter_email, u.phone as recruiter_phone
                 FROM applications a 
                 JOIN jobs j ON a.job_id = j.id 
                 JOIN users u ON j.recruiter_id = u.id 
@@ -168,12 +178,13 @@ if ($action === 'get_applications') {
     exit;
 }
 
+// Modifier statut candidature
 if ($action === 'update_status') {
-    // 1. Mise à jour du statut
+    if (!isset($_SESSION['user']) || $_SESSION['user']['role'] === 'student') exit;
+
     $stmt = $pdo->prepare("UPDATE applications SET status = ? WHERE id = ?");
     $stmt->execute([$input['status'], $input['id']]);
 
-    // 2. Récupérer les infos pour la notification (Qui est l'étudiant ? Quel poste ?)
     $stmtInfo = $pdo->prepare("
         SELECT a.user_id, j.title as job_title 
         FROM applications a 
@@ -183,7 +194,7 @@ if ($action === 'update_status') {
     $stmtInfo->execute([$input['id']]);
     $info = $stmtInfo->fetch();
 
-    // 3. Créer la notification
+    // Envoi de la notif à l'étudiant
     if ($info) {
         $statusLabels = [
             'entretien' => 'Entretien proposé',
@@ -201,55 +212,61 @@ if ($action === 'update_status') {
     exit;
 }
 
-// 4. ADMIN USERS
+// Liste utilisateurs admin
 if ($action === 'get_users') {
-    $stmt = $pdo->query("SELECT * FROM users ORDER BY created_at DESC");
+    if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') exit;
+    
+    $stmt = $pdo->query("SELECT id, name, email, role, company, phone, status, created_at FROM users ORDER BY created_at DESC");
     echo json_encode($stmt->fetchAll());
     exit;
 }
 
+// Supprimer utilisateur
 if ($action === 'delete_user') {
-    $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
+    if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') exit;
+
+    $stmt = $pdo->prepare("DELETE FROM users WHERE id = ? AND role != 'admin'");
     $stmt->execute([$_GET['id']]);
     echo json_encode(['success' => true]);
     exit;
 }
 
+// Mettre à jour profil
 if ($action === 'update_user') {
-    // On permet la mise à jour de 'company' si fournie (pour le recruteur)
-    // On vérifie d'abord si le champ 'company' est présent dans l'input
+    if (!isset($_SESSION['user'])) exit;
+
+    $idToUpdate = $input['id'];
+    
+    if ($_SESSION['user']['role'] !== 'admin' && $_SESSION['user']['id'] != $idToUpdate) exit;
+
     if (isset($input['company'])) {
         $stmt = $pdo->prepare("UPDATE users SET name=?, email=?, role=?, status=?, phone=?, company=? WHERE id=?");
-        $stmt->execute([$input['name'], $input['email'], $input['role'], $input['status'], $input['phone'] ?? '', $input['company'], $input['id']]);
+        $stmt->execute([$input['name'], $input['email'], $input['role'], $input['status'], $input['phone'] ?? '', $input['company'], $idToUpdate]);
     } else {
         $stmt = $pdo->prepare("UPDATE users SET name=?, email=?, role=?, status=?, phone=? WHERE id=?");
-        $stmt->execute([$input['name'], $input['email'], $input['role'], $input['status'], $input['phone'] ?? '', $input['id']]);
+        $stmt->execute([$input['name'], $input['email'], $input['role'], $input['status'], $input['phone'] ?? '', $idToUpdate]);
     }
     echo json_encode(['success' => true]);
     exit;
 }
 
-// 5. MESSAGERIE (CHAT PAR OFFRE)
+// Envoyer message chat
 if ($action === 'send_message') {
-    if (!isset($_SESSION['user'])) { echo json_encode(['success'=>false, 'message'=>'Non connecté']); exit; }
+    if (!isset($_SESSION['user'])) exit;
     
     $senderId = $_SESSION['user']['id'];
     $receiverId = $input['receiver_id'];
     $message = $input['message'];
     $jobId = $input['job_id'];
 
-    // 1. Insérer le message
     $stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, message, job_id) VALUES (?, ?, ?, ?)");
     $stmt->execute([$senderId, $receiverId, $message, $jobId]);
     
-    // 2. Récupérer les infos de l'expéditeur (Recruteur) et du Job pour la notif
-    // On suppose que c'est un recruteur qui écrit à un étudiant
     $stmtInfo = $pdo->prepare("SELECT name, company FROM users WHERE id = ?");
     $stmtInfo->execute([$senderId]);
     $senderInfo = $stmtInfo->fetch();
 
     if ($senderInfo) {
-        // Préparation des données pour le bouton d'action JS
         $actionData = [
             'recruiter_id' => $senderId,
             'name' => $senderInfo['name'],
@@ -257,7 +274,6 @@ if ($action === 'send_message') {
             'job_id' => $jobId
         ];
 
-        // Création de la notif avec les DATA
         createNotification($pdo, $receiverId, 'message', "Nouveau message", "{$senderInfo['name']} vous a envoyé un message.", $actionData);
     }
 
@@ -265,14 +281,14 @@ if ($action === 'send_message') {
     exit;
 }
 
+// Charger messages chat
 if ($action === 'get_messages') {
     if (!isset($_SESSION['user'])) { echo json_encode([]); exit; }
     
     $myId = $_SESSION['user']['id'];
     $otherId = $_GET['contact_id'];
-    $jobId = $_GET['job_id']; // Nouveau paramètre
+    $jobId = $_GET['job_id'];
 
-    // On filtre MAINTENANT aussi par job_id
     $stmt = $pdo->prepare("
         SELECT * FROM messages 
         WHERE ((sender_id = ? AND receiver_id = ?) 
@@ -286,24 +302,23 @@ if ($action === 'get_messages') {
     exit;
 }
 
+// Fonction utilitaire pour notifs
 function createNotification($pdo, $userId, $type, $title, $message, $data = null) {
-    // On encode les données en JSON pour les stocker
     $dataJson = $data ? json_encode($data) : null;
-    
     $stmt = $pdo->prepare("INSERT INTO notifications (user_id, type, title, message, data) VALUES (?, ?, ?, ?, ?)");
     $stmt->execute([$userId, $type, $title, $message, $dataJson]);
 }
+
+// Vérifier nouvelles notifs
 if ($action === 'check_notifications') {
     if (!isset($_SESSION['user'])) { echo json_encode([]); exit; }
     
     $userId = $_SESSION['user']['id'];
     
-    // Récupérer les notifs non lues
     $stmt = $pdo->prepare("SELECT * FROM notifications WHERE user_id = ? AND is_read = 0 ORDER BY created_at ASC");
     $stmt->execute([$userId]);
     $notifs = $stmt->fetchAll();
 
-    // Marquer comme lues immédiatement après récupération
     if (count($notifs) > 0) {
         $stmtUpdate = $pdo->prepare("UPDATE notifications SET is_read = 1 WHERE user_id = ?");
         $stmtUpdate->execute([$userId]);
@@ -313,8 +328,9 @@ if ($action === 'check_notifications') {
     exit;
 }
 
+// Signaler une offre
 if ($action === 'report_job') {
-    if (!isset($_SESSION['user'])) { echo json_encode(['success'=>false, 'message'=>'Non connecté']); exit; }
+    if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'student') exit;
     
     $stmt = $pdo->prepare("INSERT INTO reports (user_id, job_id, reason) VALUES (?, ?, ?)");
     $stmt->execute([$_SESSION['user']['id'], $input['job_id'], $input['reason']]);
@@ -323,15 +339,14 @@ if ($action === 'report_job') {
     exit;
 }
 
-// 6. GESTION DES SIGNALEMENTS (ADMIN)
+// Liste des signalements admin
 if ($action === 'get_reports') {
     if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') { echo json_encode([]); exit; }
     
-    // On récupère le signalement + info offre + info signaleur
     $stmt = $pdo->query("
         SELECT r.*, 
-                j.title as job_title, j.company, 
-                u.name as reporter_name
+            j.title as job_title, j.company, 
+            u.name as reporter_name
         FROM reports r
         JOIN jobs j ON r.job_id = j.id
         JOIN users u ON r.user_id = u.id
@@ -341,6 +356,7 @@ if ($action === 'get_reports') {
     exit;
 }
 
+// Supprimer un signalement
 if ($action === 'delete_report') {
     if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') exit;
     

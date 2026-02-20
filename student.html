@@ -29,17 +29,18 @@
 
     <style>
         body { font-family: 'Inter', sans-serif; }
+
+        /* Navigation & Vues */
         .view { display: none; opacity: 0; transition: opacity 0.3s ease-in-out; }
         .view.active { display: block; opacity: 1; }
-        
         .nav-link { cursor: pointer; transition: all 0.2s; border-bottom: 2px solid transparent; color: #94a3b8; }
         .nav-link:hover { background-color: rgba(255,255,255,0.1); color: #f8fafc; }
         .nav-link.active-link { background-color: rgba(255,255,255,0.15); border-bottom: 2px solid #3b82f6; color: #f8fafc; }
-
         .tab-btn { position: relative; color: #64748b; transition: all 0.2s; }
         .tab-btn:hover { color: #0f172a; }
         .tab-btn.active-tab { color: #0f172a; font-weight: 600; border-bottom: 2px solid #0f172a; }
-        
+
+        /* Modales instantanées */
         .modal { transition: opacity 0.2s ease-in-out; }
         .modal-content { transform: scale(0.95); transition: transform 0.2s ease-in-out; }
         .modal.flex .modal-content { transform: scale(1); }
@@ -377,7 +378,7 @@
     </div>
 
     <script>
-        // --- DONNÉES GLOBALES (Initialisées vides pour l'API) ---
+        // Données globales
         let studentInfo = {};
         let jobs = [];
         let candidatures = [];
@@ -385,6 +386,7 @@
         let favorites = []; 
         let currentSort = { column: 'date', order: 'desc' };
 
+        // Dictionnaire statuts candidatures
         const statusConfig = {
             en_attente: { label: 'En attente', class: 'bg-slate-100 text-slate-700 border border-slate-200' },
             entretien: { label: 'Entretien', class: 'bg-blue-50 text-blue-700 border border-blue-100' },
@@ -393,17 +395,24 @@
             nouveau: { label: 'Nouveau', class: 'bg-amber-50 text-amber-700 border border-amber-100' }
         };
 
-        // --- INIT ---
+        // Securité (XSS)
+        function escapeHtml(text) {
+            if (text == null) return "";
+            return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // Initialisation
         document.addEventListener('DOMContentLoaded', async () => {
             setupEventListeners();
-            await checkSession();     // 1. Qui est connecté ?
-            await loadJobs();         // 2. Récupérer les offres
-            await loadCandidatures(); // 3. Récupérer les candidatures
-            renderContactsGrid();     // 4. Rendu contacts (vide ou statique)
-            renderFavoritesInProfile(); // 5. Rendu favoris
-            initCharts();             // 6. Initialiser les graphiques une première fois
+            await checkSession();
+            await loadJobs();
+            await loadCandidatures(); 
+            renderContactsGrid();
+            renderFavoritesInProfile();
+            initCharts();
         });
 
+        // Verification authentification
         async function checkSession() {
             try {
                 const res = await fetch('api.php?action=check_session');
@@ -424,12 +433,13 @@
             window.location.href = 'login.html';
         }
 
+        // Chargement des données
         async function loadJobs() {
             try {
                 const res = await fetch('api.php?action=get_jobs');
                 jobs = await res.json();
                 renderJobsGrid();
-                renderFavoritesInProfile(); // Mise à jour après chargement des jobs
+                renderFavoritesInProfile();
             } catch (e) { console.error("Erreur chargement jobs", e); }
         }
 
@@ -438,16 +448,12 @@
                 const res = await fetch('api.php?action=get_applications');
                 const data = await res.json();
                 
-                // Sécurité si l'API renvoie null ou autre chose qu'un tableau
                 candidatures = Array.isArray(data) ? data : [];
                 
                 updateKPIs();
                 renderCandidaturesTable();
-                renderContactsGrid(); // Pour l'onglet contact
-                initCharts();         // Pour les graphiques
-                
-                // --- CORRECTION ICI ---
-                // On rafraîchit la grille des offres maintenant qu'on a les candidatures
+                renderContactsGrid();
+                initCharts();
                 renderJobsGrid(); 
                 
             } catch (e) { 
@@ -455,6 +461,7 @@
             }
         }
 
+        // Événements
         function setupEventListeners() {
             document.getElementById('job-search').addEventListener('input', filterJobs);
             document.getElementById('sector-filter').addEventListener('change', filterJobs);
@@ -462,30 +469,27 @@
             document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
         }
 
-        // --- UI & DATA BINDING ---
+        // UI Updates
         function updateGlobalUI() {
             document.getElementById('user-name').textContent = studentInfo.name;
             const initials = studentInfo.name ? studentInfo.name.substring(0,2).toUpperCase() : 'ET';
             document.getElementById('user-avatar').textContent = initials;
             document.getElementById('dashboard-welcome-msg').textContent = `Bienvenue, ${studentInfo.name} ! Voici un aperçu de vos candidatures.`;
-            
-            // Remplir le formulaire profil
             document.getElementById('student-name').value = studentInfo.name || '';
             document.getElementById('student-email').value = studentInfo.email || '';
             document.getElementById('student-phone').value = studentInfo.phone || '';
             document.getElementById('student-role').value = studentInfo.role || '';
         }
 
+        // KPI Updates
         function updateKPIs() {
             document.getElementById('kpi-candidatures').textContent = candidatures.length;
             document.getElementById('kpi-candidatures-week').textContent = candidatures.length > 0 ? 1 : 0; 
             document.getElementById('kpi-entretiens').textContent = candidatures.filter(c => c.status === 'entretien').length;
             document.getElementById('kpi-favorites').textContent = favorites.length;
-            
-            // Le KPI contacts est maintenant géré directement dans renderContactsGrid
-            // pour être synchro avec le filtrage
         }
 
+        // Navigation
         function switchView(viewId) {
             document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active-link'));
@@ -493,10 +497,8 @@
             document.getElementById('nav-' + viewId).classList.add('active-link');
             
             if (viewId === 'profile') renderFavoritesInProfile();
-            
-            // CORRECTION: Dessiner les graphiques SEULEMENT quand le dashboard devient visible
             if (viewId === 'dashboard') {
-                setTimeout(initCharts, 100); // Petit délai pour être sûr que le DOM est prêt
+                setTimeout(initCharts, 100);
             }
         }
 
@@ -512,6 +514,7 @@
             document.getElementById(`tab-${tabId}`).classList.remove('hidden');
         }
 
+        // Offres de stage
         function filterJobs() {
             renderJobsGrid();
         }
@@ -537,21 +540,15 @@
             }
             
             grid.innerHTML = filteredJobs.map(job => {
-                // 1. Vérification : est-ce que l'ID de l'offre est dans mes candidatures ?
-                // On utilise parseInt pour être sûr de comparer des nombres (1 vs "1")
                 const hasApplied = candidatures.some(c => parseInt(c.job_id) === parseInt(job.id));
-                
-                // 2. Choix du bouton
                 let buttonHtml;
                 if (hasApplied) {
-                    // BOUTON VERT DÉSACTIVÉ
                     buttonHtml = `
                         <button disabled class="flex-1 bg-green-50 text-green-600 text-sm font-bold py-2.5 rounded-lg border border-green-100 cursor-default flex items-center justify-center gap-2">
                             <i class="fa-solid fa-check"></i> Déjà postulé
                         </button>
                     `;
                 } else {
-                    // BOUTON BLEU ACTIF
                     buttonHtml = `
                         <button onclick="applyToJob(${job.id})" class="flex-1 bg-primary hover:bg-slate-800 text-white text-sm font-medium py-2.5 rounded-lg transition shadow-sm transform active:scale-95">
                             Postuler
@@ -601,6 +598,7 @@
             }).join('');
         }
 
+        // Candidatures
         function renderCandidaturesTable() {
             const tbody = document.getElementById('candidatures-table-body');
             if (!tbody) return;
@@ -654,17 +652,12 @@
             }).join('');
         }
 
-
+        // Contacts
         function renderContactsGrid() {
             const grid = document.getElementById('contacts-grid');
-            
-            // 1. Filtrer les candidatures : on garde seulement celles en "entretien" ou "accepte"
             const contactList = candidatures.filter(c => c.status === 'entretien' || c.status === 'accepte');
-
-            // 2. Mettre à jour le compteur KPI
             document.getElementById('kpi-contacts').textContent = contactList.length;
 
-            // 3. Gestion du cas vide
             if (contactList.length === 0) {
                 grid.innerHTML = `
                     <div class="col-span-full flex flex-col items-center justify-center p-8 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
@@ -674,7 +667,6 @@
                 return;
             }
 
-            // 4. Affichage des cartes
             grid.innerHTML = contactList.map(c => {
                 const name = c.recruiter_name || 'Recruteur';
                 const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -734,12 +726,11 @@
             `}).join('');
         }
 
+        // Chat logic
         let currentContactId = null; 
-        let currentJobId = null; // Nouvelle variable globale
+        let currentJobId = null;
         let chatInterval = null;
 
-        // On ajoute jobId en paramètre
-        // Notez le changement de nom du 3ème paramètre : jobTitle
         async function openChatModal(recruiterId, name, jobTitle, initials, jobId) {
             currentContactId = recruiterId;
             currentJobId = jobId; 
@@ -748,9 +739,7 @@
             document.getElementById('chat-job-id').value = jobId;
             
             document.getElementById('chat-name').textContent = name;
-            
-            // Affiche le titre de l'offre ici
-            // On peut ajouter "Offre : " devant pour que ce soit clair
+        
             document.getElementById('chat-company').textContent = jobTitle; 
             document.getElementById('chat-avatar').textContent = initials;
             
@@ -763,10 +752,10 @@
             m.classList.remove('hidden'); m.classList.add('flex');
         }
 
+        // Charger les messages de conversation
         async function loadMessages() {
             if(!currentContactId || !currentJobId) return;
             try {
-                // On passe le job_id dans l'URL
                 const res = await fetch(`api.php?action=get_messages&contact_id=${currentContactId}&job_id=${currentJobId}`);
                 const messages = await res.json();
                 
@@ -796,19 +785,19 @@
             } catch (e) { console.error(e); }
         }
 
+        // Envoyer un message
         async function sendMessage(event) {
             event.preventDefault();
             const input = document.getElementById('chat-input');
             const message = input.value.trim();
             const receiverId = document.getElementById('chat-receiver-id').value;
-            const jobId = document.getElementById('chat-job-id').value; // Récupérer le job ID
+            const jobId = document.getElementById('chat-job-id').value;
 
             if (message && receiverId && jobId) {
                 try {
                     await fetch('api.php?action=send_message', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        // On envoie le job_id au serveur
                         body: JSON.stringify({ receiver_id: receiverId, message: message, job_id: jobId })
                     });
                     
@@ -819,30 +808,24 @@
                 } catch(e) { console.error(e); }
             }
         }
-        function closeChatModal() {
-            console.log("Fermeture du chat..."); // Pour vérifier dans la console (F12)
 
-            // 1. Arrêter le rafraîchissement automatique
+        // Fermer la modale de chat
+        function closeChatModal() {
+            console.log("Fermeture du chat..."); 
             if (chatInterval) {
                 clearInterval(chatInterval);
                 chatInterval = null;
             }
-
-            // 2. Cacher la modale
             const modal = document.getElementById('modal-chat');
             if (modal) {
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
             }
-
-            // 3. Reset des variables de contexte (Optionnel mais propre)
             if (typeof currentContactId !== 'undefined') currentContactId = null;
             if (typeof currentJobId !== 'undefined') currentJobId = null;
         }
 
-        // --- SYSTÈME DE NOTIFICATIONS ---
-
-        // Lancer la vérification toutes les 5 secondes
+        // Check notifications toutes les 5 secondes
         setInterval(checkNotifications, 5000);
 
         async function checkNotifications() {
@@ -853,7 +836,6 @@
                 if (notifications && notifications.length > 0) {
                     const notif = notifications[notifications.length - 1];
                     
-                    // ON PASSE 'notif.data' (qui est une string JSON venant de PHP)
                     showNotificationModal(notif.type, notif.title, notif.message, notif.data);
                     
                     loadCandidatures(); 
@@ -870,34 +852,25 @@
             document.getElementById('notif-title').textContent = title;
             document.getElementById('notif-message').textContent = message;
 
-            // Reset visuel
             content.className = content.className.replace(/border-\w+-\d+/, '');
-            btn.classList.add('hidden'); // On cache le bouton par défaut
+            btn.classList.add('hidden');
 
             if (type === 'message') {
-                // STYLE MESSAGE
                 icon.innerHTML = '<i class="fa-solid fa-comments"></i>';
                 icon.className = 'text-2xl pt-1 text-indigo-600';
                 content.classList.add('border-indigo-600');
 
-                // LOGIQUE DU BOUTON
                 if (dataJson) {
                     try {
-                        // On décode le JSON reçu de la BDD (ex: {"recruiter_id":5, ...})
                         const data = (typeof dataJson === 'string') ? JSON.parse(dataJson) : dataJson;
-                        
-                        // Calcul des initiales
+
                         const initials = data.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
-                        // Configuration du clic
                         btn.onclick = function() {
-                            // On ouvre le chat
                             openChatModal(data.recruiter_id, data.name, data.company, initials, data.job_id);
-                            // On ferme la notif
                             closeNotification();
                         };
 
-                        // On affiche le bouton
                         btn.classList.remove('hidden');
                     } catch (e) {
                         console.error("Erreur parsing data notif", e);
@@ -922,9 +895,8 @@
         }
         
 
-        // --- CORRECTION : LOGIQUE FAVORIS ---
+        // Favoris actions
         function toggleFavorite(id) {
-            // Conversion en nombre pour être sûr que ça match avec l'ID du job
             const numericId = parseInt(id); 
             
             const index = favorites.indexOf(numericId);
@@ -933,14 +905,13 @@
             } else {
                 favorites.splice(index, 1);
             }
-            renderJobsGrid(); // Met à jour les coeurs sur la grille
-            renderFavoritesInProfile(); // Met à jour la liste dans le profil
+            renderJobsGrid();
+            renderFavoritesInProfile();
             updateKPIs();
         }
 
         function renderFavoritesInProfile() {
             const container = document.getElementById('favorites-container');
-            // Filtrage : On compare aussi en Nombre
             const favJobs = jobs.filter(job => favorites.includes(parseInt(job.id)));
             
             if (favJobs.length === 0) { 
@@ -961,15 +932,12 @@
             }).join('');
         }
 
-        // --- ACTION POSTULER (CORRIGÉE) ---
+        // Postuler à une offre
         async function applyToJob(id) {
-            // 1. Utiliser '==' au lieu de '===' pour gérer les ID en string ou number
             const job = jobs.find(j => j.id == id);
             
-            // Sécurité : si l'offre n'est pas trouvée dans la liste locale
             const jobTitle = job ? job.title : "cette offre";
 
-            // Vérification locale si déjà postulé
             if (candidatures.some(c => c.job_id == id)) {
                 showModal("Erreur", `
                     <div class="text-center py-2">
@@ -994,7 +962,6 @@
                 if(result.success) {
                     await loadCandidatures(); 
                     
-                    // Affichage de la modale de succès
                     showModal('Candidature envoyée', `<div class="text-center py-4">
                         <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl shadow-sm">
                             <i class="fa-solid fa-check"></i>
@@ -1020,29 +987,23 @@
             }
         }
 
+        // Détails d'une offre
         function openJobDetails(id) {
-            // 1. Trouver l'offre
-            // On utilise '==' pour la souplesse (string vs int)
             const job = jobs.find(j => j.id == id);
             if(!job) return;
 
-            // 2. Gestion du logo
             const logo = job.company ? job.company.substring(0,2).toUpperCase() : 'ES';
 
-            // 3. Vérifier si l'étudiant a déjà postulé (Même logique que pour la grille)
             const hasApplied = candidatures.some(c => parseInt(c.job_id) === parseInt(job.id));
 
-            // 4. Préparer le bouton d'action dynamiquement
             let actionButton;
             if (hasApplied) {
-                // Bouton Vert (Désactivé)
                 actionButton = `
                     <button disabled class="flex-1 bg-green-50 text-green-700 py-3 rounded-xl font-bold border border-green-200 cursor-default flex items-center justify-center gap-2">
                         <i class="fa-solid fa-check"></i> Déjà postulé
                     </button>
                 `;
             } else {
-                // Bouton Bleu (Actif)
                 actionButton = `
                     <button onclick="closeModal(); applyToJob(${job.id})" class="flex-1 bg-primary text-white py-3 rounded-xl font-bold hover:bg-slate-800 shadow-lg transition transform active:scale-95">
                         Postuler maintenant
@@ -1050,7 +1011,6 @@
                 `;
             }
 
-            // 5. Afficher la modale avec le bouton dynamique
             showModal('Détails de l\'offre', `<div class="space-y-6">
                 <div class="flex items-center gap-5 pb-6 border-b border-slate-100">
                     <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center font-bold text-3xl shadow-sm">
@@ -1076,10 +1036,8 @@
             </div>`);
         }
 
-        // --- SIGNALEMENT (REPORT) ---
-
+        // Signaler une offre
         function openReportModal(jobId, jobTitle) {
-            // Nettoyage des caractères spéciaux pour l'affichage
             const safeTitle = jobTitle.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
             const content = `
@@ -1118,16 +1076,10 @@
         }
 
         async function submitReport(jobId) {
-            // 1. Récupérer la raison
             const radio = document.querySelector('input[name="report_reason"]:checked');
             const reason = radio ? radio.value : 'autre';
 
-            // --- MODIFICATION IMPORTANTE ICI ---
-            // On NE FERME PAS la modale ici. On la laisse ouverte pendant l'envoi.
-            // Cela évite qu'elle disparaisse pour réapparaître.
-            
             try {
-                // 2. Appel API
                 const res = await fetch('api.php?action=report_job', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -1137,8 +1089,6 @@
                 const result = await res.json();
 
                 if (result.success) {
-                    // 3. SUCCÈS : On remplace le contenu de la modale ouverte instantanément
-                    // La fonction showModal va écraser le formulaire par le message de succès
                     showModal("Signalement reçu", `
                         <div class="text-center py-4">
                             <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
@@ -1150,7 +1100,6 @@
                         </div>
                     `);
                 } else {
-                    // En cas d'erreur, on ferme pour afficher l'alerte (ou on affiche l'erreur dans la modale)
                     closeModal();
                     alert("Erreur : " + result.message);
                 }
@@ -1161,7 +1110,7 @@
             }
         }
         
-
+        // Sauvegarder le profil étudiant
         async function saveStudentProfile() {
             const name = document.getElementById('student-name').value;
             const email = document.getElementById('student-email').value;
@@ -1184,7 +1133,7 @@
             } catch(e) { console.error(e); }
         }
         
-        // --- GESTION FICHIERS CV ---
+        // Gestion des fichiers CV
         function handleFileSelect(lang, inputElement) {
             if (inputElement.files && inputElement.files.length > 0) {
                 const file = inputElement.files[0];
@@ -1217,7 +1166,7 @@
             cardEl.classList.remove('border-solid', 'border-green-500', 'bg-green-50');
         }
 
-        // --- MODALE ---
+        // Modales génériques
         function showModal(title, content) {
             const m = document.getElementById('modal');
             document.getElementById('modal-title').innerText = title;
@@ -1232,12 +1181,13 @@
             setTimeout(() => { m.classList.add('hidden'); m.classList.remove('flex'); }, 200);
         }
 
-        // --- HELPERS ---
+        // Formatage de la date
         function formatDate(dateStr) {
             const date = new Date(dateStr);
             return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
 
+        // Tri des candidatures
         function handleSort(col) {
             currentSort.order = (currentSort.column === col && currentSort.order === 'asc') ? 'desc' : 'asc';
             currentSort.column = col;
@@ -1250,97 +1200,89 @@
             renderCandidaturesTable();
         }
 
-        // --- CHARTS ---
-        let charts = {}; // Stocker les instances
+        // Graphiques
+        let charts = {};
 
         function initCharts() {
-    // 1. Détruire les anciens graphiques pour éviter les superpositions au survol
-    if (charts.sector && typeof charts.sector.destroy === 'function') charts.sector.destroy();
-    if (charts.status && typeof charts.status.destroy === 'function') charts.status.destroy();
+            if (charts.sector && typeof charts.sector.destroy === 'function') charts.sector.destroy();
+            if (charts.status && typeof charts.status.destroy === 'function') charts.status.destroy();
 
-    // 2. Initialiser les compteurs à zéro (en minuscules pour correspondre à la BDD)
-    const sectorCounts = { 'tech': 0, 'aero': 0, 'energie': 0, 'conseil': 0 };
-    const statusCounts = { 'en_attente': 0, 'entretien': 0, 'accepte': 0, 'refuse': 0 };
+            const sectorCounts = { 'tech': 0, 'aero': 0, 'energie': 0, 'conseil': 0 };
+            const statusCounts = { 'en_attente': 0, 'entretien': 0, 'accepte': 0, 'refuse': 0 };
 
-    // 3. Compter réellement les données depuis le tableau 'candidatures'
-    candidatures.forEach(c => {
-        // Comptage par Secteur
-        // On s'assure que c.sector existe et on le met en minuscule pour le test
-        const s = c.sector ? c.sector.toLowerCase() : '';
-        if (sectorCounts.hasOwnProperty(s)) {
-            sectorCounts[s]++;
-        }
-
-        // Comptage par Statut
-        if (statusCounts.hasOwnProperty(c.status)) {
-            statusCounts[c.status]++;
-        }
-    });
-
-    // --- Graphique Secteur (Doughnut) ---
-    const ctxSector = document.getElementById('sectorChart');
-    if (ctxSector) {
-        charts.sector = new Chart(ctxSector, {
-            type: 'doughnut',
-            data: {
-                labels: ['Tech / IT', 'Aéronautique', 'Énergie', 'Conseil'],
-                datasets: [{
-                    // On utilise les vraies valeurs calculées
-                    data: [
-                        sectorCounts['tech'], 
-                        sectorCounts['aero'], 
-                        sectorCounts['energie'], 
-                        sectorCounts['conseil']
-                    ],
-                    backgroundColor: ['#0f172a', '#3b82f6', '#22c55e', '#f59e0b'],
-                    borderWidth: 4,
-                    borderColor: '#ffffff',
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '70%',
-                plugins: {
-                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+            candidatures.forEach(c => {
+                const s = c.sector ? c.sector.toLowerCase() : '';
+                if (sectorCounts.hasOwnProperty(s)) {
+                    sectorCounts[s]++;
                 }
-            }
-        });
-    }
-
-    // --- Graphique Statut (Barres Horizontales) ---
-    const ctxStatus = document.getElementById('statusChart');
-    if (ctxStatus) {
-        charts.status = new Chart(ctxStatus, {
-            type: 'bar',
-            data: {
-                labels: ['En attente', 'Entretien', 'Accepté', 'Refusé'],
-                datasets: [{
-                    label: 'Nombre de dossiers',
-                    data: [
-                        statusCounts['en_attente'], 
-                        statusCounts['entretien'], 
-                        statusCounts['accepte'], 
-                        statusCounts['refuse']
-                    ],
-                    backgroundColor: ['#94a3b8', '#3b82f6', '#22c55e', '#ef4444'],
-                    borderRadius: 6,
-                    barThickness: 20
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { beginAtZero: true, grid: { color: '#e2e8f0' }, ticks: { stepSize: 1, color: '#64748b' } },
-                    y: { grid: { display: false }, ticks: { color: '#64748b' } }
+                if (statusCounts.hasOwnProperty(c.status)) {
+                    statusCounts[c.status]++;
                 }
+            });
+
+            // Graphique Secteur
+            const ctxSector = document.getElementById('sectorChart');
+            if (ctxSector) {
+                charts.sector = new Chart(ctxSector, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Tech / IT', 'Aéronautique', 'Énergie', 'Conseil'],
+                        datasets: [{
+                            data: [
+                                sectorCounts['tech'], 
+                                sectorCounts['aero'], 
+                                sectorCounts['energie'], 
+                                sectorCounts['conseil']
+                            ],
+                            backgroundColor: ['#0f172a', '#3b82f6', '#22c55e', '#f59e0b'],
+                            borderWidth: 4,
+                            borderColor: '#ffffff',
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+                        }
+                    }
+                });
             }
-        });
-    }
-}
+
+            // - Graphique Statut
+            const ctxStatus = document.getElementById('statusChart');
+            if (ctxStatus) {
+                charts.status = new Chart(ctxStatus, {
+                    type: 'bar',
+                    data: {
+                        labels: ['En attente', 'Entretien', 'Accepté', 'Refusé'],
+                        datasets: [{
+                            label: 'Nombre de dossiers',
+                            data: [
+                                statusCounts['en_attente'], 
+                                statusCounts['entretien'], 
+                                statusCounts['accepte'], 
+                                statusCounts['refuse']
+                            ],
+                            backgroundColor: ['#94a3b8', '#3b82f6', '#22c55e', '#ef4444'],
+                            borderRadius: 6,
+                            barThickness: 20
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { beginAtZero: true, grid: { color: '#e2e8f0' }, ticks: { stepSize: 1, color: '#64748b' } },
+                            y: { grid: { display: false }, ticks: { color: '#64748b' } }
+                        }
+                    }
+                });
+            }
+        }
     </script>
 </body>
 </html>

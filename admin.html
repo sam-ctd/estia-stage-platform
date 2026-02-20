@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administration - ESTIA</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -28,22 +29,25 @@
 
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .view { display: none; opacity: 0; transition: opacity 0.3s ease-in-out; }
-        .view.active { display: block; opacity: 1; }
+        
+        /* Navigation (Onglets) */
+        .view { display: none; }
+        .view.active { display: block; }
         
         .nav-link { cursor: pointer; transition: all 0.2s; border-bottom: 2px solid transparent; color: #94a3b8; }
         .nav-link:hover { background-color: rgba(255,255,255,0.1); color: #f8fafc; }
         .nav-link.active-link { background-color: rgba(255,255,255,0.15); border-bottom: 2px solid #3b82f6; color: #f8fafc; }
 
+        /* Animation toast (conservée car utile pour les alertes éphémères) */
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
         .toast { animation: slideIn 0.3s ease-out forwards; }
         
-        .modal { transition: opacity 0.2s ease-in-out; }
-        .modal-content { transform: scale(0.95); transition: transform 0.2s ease-in-out; }
-        .modal.flex .modal-content { transform: scale(1); }
+        /* Modales instantanées */
+        .modal.hidden, #modal-edit-user.hidden, #modal-job-details.hidden, #modal-delete-user.hidden, #modal-delete-job.hidden, #modal-delete-reported.hidden, #modal-dismiss-report.hidden { display: none; }
+        .modal.flex, #modal-edit-user.flex, #modal-job-details.flex, #modal-delete-user.flex, #modal-delete-job.flex, #modal-delete-reported.flex, #modal-dismiss-report.flex { display: flex; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800">
@@ -202,8 +206,8 @@
     </main>
 
     <div id="modal-edit-user" class="fixed inset-0 z-[100] hidden items-center justify-center">
-        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onclick="closeModal('modal-edit-user')"></div>
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 relative z-10 overflow-hidden transform transition-all scale-100">
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeModal('modal-edit-user')"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 relative z-10 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
                 <h3 class="font-bold text-lg text-slate-800">Modifier l'utilisateur</h3>
                 <button onclick="closeModal('modal-edit-user')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -242,16 +246,16 @@
                 </div>
 
                 <div class="pt-4 flex justify-end gap-3">
-                    <button type="button" onclick="closeModal('modal-edit-user')" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition font-medium">Annuler</button>
-                    <button type="submit" class="px-6 py-2 bg-primary hover:bg-slate-800 text-white rounded-lg transition font-medium shadow-lg hover:shadow-xl">Enregistrer</button>
+                    <button type="button" onclick="closeModal('modal-edit-user')" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Annuler</button>
+                    <button type="submit" class="px-6 py-2 bg-primary hover:bg-slate-800 text-white rounded-lg font-medium shadow-sm">Enregistrer</button>
                 </div>
             </form>
         </div>
     </div>
 
     <div id="modal-job-details" class="fixed inset-0 z-[100] hidden items-center justify-center">
-        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onclick="closeModal('modal-job-details')"></div>
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 relative z-10 overflow-hidden transform transition-all scale-100">
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeModal('modal-job-details')"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 relative z-10 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
                 <h3 class="font-bold text-lg text-slate-800">Détails de l'offre</h3>
                 <button onclick="closeModal('modal-job-details')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -259,13 +263,13 @@
             <div id="job-details-content" class="p-6 space-y-4">
                 </div>
             <div class="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end">
-                <button onclick="closeModal('modal-job-details')" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg transition">Fermer</button>
+                <button onclick="closeModal('modal-job-details')" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg">Fermer</button>
             </div>
         </div>
     </div>
 
     <div id="modal-delete-user" class="fixed inset-0 z-[100] hidden items-center justify-center">
-        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onclick="closeModal('modal-delete-user')"></div>
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeModal('modal-delete-user')"></div>
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 relative z-10 overflow-hidden p-6 text-center">
             <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600 text-2xl">
                 <i class="fa-solid fa-triangle-exclamation"></i>
@@ -273,14 +277,14 @@
             <h3 class="text-xl font-bold text-slate-900 mb-2">Êtes-vous sûr ?</h3>
             <p class="text-slate-500 text-sm mb-6">Cette action est irréversible. L'utilisateur sera définitivement supprimé.</p>
             <div class="flex gap-3 justify-center">
-                <button onclick="closeModal('modal-delete-user')" class="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition">Annuler</button>
-                <button onclick="confirmDeleteUser()" class="flex-1 px-4 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-lg transition">Supprimer</button>
+                <button onclick="closeModal('modal-delete-user')" class="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-50">Annuler</button>
+                <button onclick="confirmDeleteUser()" class="flex-1 px-4 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-sm">Supprimer</button>
             </div>
         </div>
     </div>
 
     <div id="modal-delete-job" class="fixed inset-0 z-[100] hidden items-center justify-center">
-        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onclick="closeModal('modal-delete-job')"></div>
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeModal('modal-delete-job')"></div>
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 relative z-10 overflow-hidden p-6 text-center">
             <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600 text-2xl">
                 <i class="fa-solid fa-trash-can"></i>
@@ -288,74 +292,73 @@
             <h3 class="text-xl font-bold text-slate-900 mb-2">Supprimer l'offre ?</h3>
             <p class="text-slate-500 text-sm mb-6">Cette action est irréversible. L'offre sera retirée de la plateforme.</p>
             <div class="flex gap-3 justify-center">
-                <button onclick="closeModal('modal-delete-job')" class="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition">Annuler</button>
-                <button onclick="confirmDeleteJob()" class="flex-1 px-4 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-lg transition">Confirmer</button>
+                <button onclick="closeModal('modal-delete-job')" class="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-50">Annuler</button>
+                <button onclick="confirmDeleteJob()" class="flex-1 px-4 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-sm">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-delete-reported" class="fixed inset-0 z-[150] hidden items-center justify-center">
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeModal('modal-delete-reported')"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 relative z-10 overflow-hidden p-6 text-center">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600 text-2xl">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">Supprimer l'offre ?</h3>
+            <p class="text-slate-500 text-sm mb-6">L'offre sera retirée définitivement et le signalement sera marqué comme traité.</p>
+            <div class="flex gap-3 justify-center">
+                <button onclick="closeModal('modal-delete-reported')" class="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-50">Annuler</button>
+                <button onclick="confirmDeleteReported()" class="flex-1 px-4 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-sm">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-dismiss-report" class="fixed inset-0 z-[150] hidden items-center justify-center">
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeModal('modal-dismiss-report')"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 relative z-10 overflow-hidden p-6 text-center">
+            <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-600 text-2xl">
+                <i class="fa-solid fa-check-double"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">Ignorer le signalement ?</h3>
+            <p class="text-slate-500 text-sm mb-6">Le signalement sera supprimé de la liste sans impacter l'offre.</p>
+            <div class="flex gap-3 justify-center">
+                <button onclick="closeModal('modal-dismiss-report')" class="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-50">Annuler</button>
+                <button onclick="confirmDismissReport()" class="flex-1 px-4 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 shadow-sm">Ignorer</button>
             </div>
         </div>
     </div>
 
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3"></div>
 
-    <div id="modal-delete-reported" class="fixed inset-0 z-[150] hidden items-center justify-center">
-        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onclick="closeModal('modal-delete-reported')"></div>
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 relative z-10 overflow-hidden p-6 text-center transform transition-all scale-100">
-            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600 text-2xl">
-                <i class="fa-solid fa-trash-can"></i>
-            </div>
-            <h3 class="text-xl font-bold text-slate-900 mb-2">Supprimer l'offre ?</h3>
-            <p class="text-slate-500 text-sm mb-6">
-                L'offre sera retirée définitivement et le signalement sera marqué comme traité.
-            </p>
-            <div class="flex gap-3 justify-center">
-                <button onclick="closeModal('modal-delete-reported')" class="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition">
-                    Annuler
-                </button>
-                <button onclick="confirmDeleteReported()" class="flex-1 px-4 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-lg transition">
-                    Supprimer
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-dismiss-report" class="fixed inset-0 z-[150] hidden items-center justify-center">
-        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onclick="closeModal('modal-dismiss-report')"></div>
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 relative z-10 overflow-hidden p-6 text-center transform transition-all scale-100">
-            <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-600 text-2xl">
-                <i class="fa-solid fa-check-double"></i>
-            </div>
-            <h3 class="text-xl font-bold text-slate-900 mb-2">Ignorer le signalement ?</h3>
-            <p class="text-slate-500 text-sm mb-6">
-                Le signalement sera supprimé de la liste sans impacter l'offre.
-            </p>
-            <div class="flex gap-3 justify-center">
-                <button onclick="closeModal('modal-dismiss-report')" class="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition">
-                    Annuler
-                </button>
-                <button onclick="confirmDismissReport()" class="flex-1 px-4 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 shadow-lg transition">
-                    Ignorer
-                </button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // --- 1. DONNÉES GLOBALES ---
+        // --- Sécurité XSS ---
+        function escapeHtml(text) {
+            if (text == null) return "";
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // --- Contexte ---
         let users = [];
         let jobs = [];
         let targetUserId = null;
 
-        // --- 2. INITIALISATION & CHARGEMENT ---
-
+        // Initialisation de l'application
         document.addEventListener('DOMContentLoaded', async () => {
             await checkSession();
             await loadUsers();
             await loadJobs();
             await loadReports();
-            await loadAllStats(); // Nouvelle fonction pour charger le compteur candidatures
+            await loadAllStats(); 
             
             document.getElementById('last-update').textContent = new Date().toLocaleDateString('fr-FR', {hour:'2-digit', minute:'2-digit'});
         });
 
+        // Validation d'accès administrateur
         async function checkSession() {
             try {
                 const res = await fetch('api.php?action=check_session');
@@ -363,56 +366,53 @@
                 if(!data.logged_in || data.user.role !== 'admin') {
                     window.location.href = 'login.html';
                 } else {
-                    document.getElementById('admin-name').textContent = data.user.name;
+                    document.getElementById('admin-name').textContent = escapeHtml(data.user.name);
                 }
             } catch(e) { console.error(e); }
         }
 
-        async function logout() {
-            await fetch('api.php?action=logout');
-            window.location.href = 'login.html';
+        function logout() {
+            fetch('api.php?action=logout').then(() => window.location.href = 'login.html');
         }
 
+        // Récupération des données utilisateurs
         async function loadUsers() {
             try {
                 const res = await fetch('api.php?action=get_users');
                 users = await res.json();
                 renderUsers();
                 renderDashboard();
-            } catch(e) { console.error("Erreur users", e); }
+            } catch(e) { console.error("Load users failed", e); }
         }
 
+        // Récupération globale des offres
         async function loadJobs() {
             try {
                 const res = await fetch('api.php?action=get_jobs&admin=1');
                 jobs = await res.json();
                 renderJobsTable();
                 renderDashboard();
-            } catch(e) { console.error("Erreur jobs", e); }
+            } catch(e) { console.error("Load jobs failed", e); }
         }
 
-        // CHARGER LE COMPTEUR DE CANDIDATURES
+        // Récupération agrégée des candidatures
         async function loadAllStats() {
             try {
-                // Nécessite la modification de api.php indiquée plus haut
                 const res = await fetch('api.php?action=get_applications'); 
                 const data = await res.json();
-                
                 if(Array.isArray(data)) {
                     document.getElementById('stat-candidatures').textContent = data.length;
                 }
-            } catch(e) { 
-                console.log("Stats candidatures indisponibles", e);
-            }
+            } catch(e) { console.log("Candidature stats unavailable", e); }
         }
 
-        // --- 3. RENDU DE L'INTERFACE (Render) ---
-
+        // Mise à jour des KPI du Dashboard
         function renderDashboard() {
             document.getElementById('stat-users').textContent = users.length;
             document.getElementById('stat-jobs').textContent = jobs.filter(j => j.status === 'published').length;
         }
 
+        // Rendu Table Utilisateurs
         function renderUsers() {
             const tbody = document.getElementById('users-table-body');
             const search = document.getElementById('user-search').value.toLowerCase();
@@ -421,9 +421,9 @@
             const filteredUsers = users.filter(user => {
                 const name = user.name || "";
                 const email = user.email || "";
-                const matchesSearch = name.toLowerCase().includes(search) || email.toLowerCase().includes(search);
-                const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-                return matchesSearch && matchesRole;
+                const matchSearch = name.toLowerCase().includes(search) || email.toLowerCase().includes(search);
+                const matchRole = roleFilter === 'all' || user.role === roleFilter;
+                return matchSearch && matchRole;
             });
 
             if(filteredUsers.length === 0) {
@@ -433,7 +433,6 @@
 
             tbody.innerHTML = filteredUsers.map(user => {
                 let roleBadge = '';
-                // Variable pour savoir si c'est un admin
                 const isAdmin = user.role === 'admin';
 
                 if(user.role === 'student') roleBadge = '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold border border-blue-200">Étudiant</span>';
@@ -442,15 +441,14 @@
                 
                 const statusColor = user.status === 'active' ? 'text-green-600' : (user.status === 'pending' ? 'text-orange-500' : 'text-danger');
                 const statusLabel = user.status === 'active' ? 'Actif' : (user.status === 'pending' ? 'En attente' : 'Inactif');
-                const name = user.name || "Inconnu";
-                const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                const name = escapeHtml(user.name || "Inconnu");
+                const initials = name.substring(0, 2).toUpperCase();
                 const dateStr = user.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR') : '-';
 
-                // Si c'est un admin, on affiche des boutons grisés/inactifs, sinon les boutons normaux
-                const actionButtons = isAdmin 
+                const actionBtns = isAdmin 
                     ? `<span class="text-xs text-slate-400 italic mr-2">Protégé</span>` 
                     : `<button onclick="editUser(${user.id})" class="text-slate-400 hover:text-accent p-2 rounded-full hover:bg-blue-50 transition" title="Modifier"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="deleteUser(${user.id})" class="text-slate-400 hover:text-danger p-2 rounded-full hover:bg-red-50 transition" title="Supprimer"><i class="fa-solid fa-trash"></i></button>`;
+                       <button onclick="deleteUser(${user.id})" class="text-slate-400 hover:text-danger p-2 rounded-full hover:bg-red-50 transition" title="Supprimer"><i class="fa-solid fa-trash"></i></button>`;
 
                 return `
                 <tr class="hover:bg-slate-50 transition group border-b border-slate-100 last:border-0">
@@ -459,7 +457,7 @@
                             <div class="w-9 h-9 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs border border-slate-300 shadow-sm">${initials}</div>
                             <div>
                                 <div class="font-bold text-slate-900">${name}</div>
-                                <div class="text-xs text-slate-500">${user.email}</div>
+                                <div class="text-xs text-slate-500">${escapeHtml(user.email)}</div>
                             </div>
                         </div>
                     </td>
@@ -470,14 +468,12 @@
                             <i class="fa-solid fa-circle text-[6px]"></i> ${statusLabel}
                         </span>
                     </td>
-                    <td class="p-4 text-right">
-                        ${actionButtons}
-                    </td>
-                </tr>
-                `;
+                    <td class="p-4 text-right">${actionBtns}</td>
+                </tr>`;
             }).join('');
         }
 
+        // Rendu Table Offres
         function renderJobsTable() {
             const tbody = document.getElementById('jobs-table-body');
             
@@ -492,7 +488,6 @@
                     ? '<span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded font-bold border border-yellow-200"><i class="fa-solid fa-clock mr-1"></i>En attente</span>'
                     : '<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-bold border border-green-200"><i class="fa-solid fa-check mr-1"></i>Publié</span>';
 
-                // MODIFICATION ICI : Appel de openDeleteJobModal
                 const actions = isPending 
                     ? `<button onclick="validateJob(${job.id})" class="text-green-600 hover:bg-green-50 px-3 py-1 rounded border border-green-200 text-xs font-bold transition mr-2">Valider</button>
                         <button onclick="openDeleteJobModal(${job.id})" class="text-red-500 hover:bg-red-50 px-3 py-1 rounded border border-red-200 text-xs font-bold transition">Rejeter</button>`
@@ -501,11 +496,11 @@
                 return `
                 <tr class="hover:bg-slate-50 transition border-b border-slate-100 last:border-0">
                     <td class="p-4">
-                        <div class="font-bold text-slate-900">${job.title}</div>
-                        <div class="text-xs text-slate-500 font-medium uppercase tracking-wide">${job.company}</div>
+                        <div class="font-bold text-slate-900">${escapeHtml(job.title)}</div>
+                        <div class="text-xs text-slate-500 font-medium uppercase tracking-wide">${escapeHtml(job.company)}</div>
                     </td>
-                    <td class="p-4"><span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold">${job.type}</span></td>
-                    <td class="p-4 text-slate-500"><i class="fa-solid fa-location-dot text-slate-300 mr-1"></i>${job.location}</td>
+                    <td class="p-4"><span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold">${escapeHtml(job.type)}</span></td>
+                    <td class="p-4 text-slate-500"><i class="fa-solid fa-location-dot text-slate-300 mr-1"></i>${escapeHtml(job.location)}</td>
                     <td class="p-4 text-center">${statusBadge}</td>
                     <td class="p-4 text-right flex justify-end gap-1 items-center">
                         <button onclick="viewJobDetails(${job.id})" class="text-slate-400 hover:text-blue-500 p-2 rounded hover:bg-slate-100 transition mr-1" title="Voir détails">
@@ -513,93 +508,59 @@
                         </button>
                         ${actions}
                     </td>
-                </tr>
-                `;
+                </tr>`;
             }).join('');
         }
 
-        // Variable pour stocker l'ID du job à supprimer
-        let targetJobId = null;
-
-        // Ouvre la modale de confirmation pour une offre
-        function openDeleteJobModal(id) {
-            targetJobId = id;
-            openModal('modal-delete-job');
-        }
-
-        // Effectue la suppression après confirmation
-        async function confirmDeleteJob() {
-            if (targetJobId !== null) {
-                await fetch(`api.php?action=delete_job&id=${targetJobId}`);
-                loadJobs();
-                closeModal('modal-delete-job');
-                showToast("Offre supprimée", "danger"); // "Rejetée" ou "Supprimée" selon le contexte
-                targetJobId = null;
-            }
-        }
-
-        // --- 4. GESTION DES MODALES ---
+        // --- GESTION DES MODALES GÉNÉRIQUES ---
         function openModal(modalId) {
-            const modal = document.getElementById(modalId);
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            const m = document.getElementById(modalId);
+            m.classList.remove('hidden'); m.classList.add('flex');
         }
 
         function closeModal(modalId) {
-            const modal = document.getElementById(modalId);
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            const m = document.getElementById(modalId);
+            m.classList.add('hidden'); m.classList.remove('flex');
         }
 
-        // --- 5. ACTIONS CRUD (Users) ---
-
+        // --- GESTION UTILISATEURS (CRUD) ---
         function editUser(id) {
-            // CORRECTION ID: '==' au lieu de '===' pour gérer string/int
             const user = users.find(u => u.id == id);
             if (!user) return;
-
-            if (user.role === 'admin') {
-                showToast("Impossible de modifier un administrateur", "danger");
-                return;
-            }
+            if (user.role === 'admin') { showToast("Impossible de modifier un administrateur", "danger"); return; }
 
             document.getElementById('edit-user-id').value = user.id;
             document.getElementById('edit-user-name').value = user.name;
             document.getElementById('edit-user-email').value = user.email;
             document.getElementById('edit-user-role').value = user.role;
             document.getElementById('edit-user-status').value = user.status;
-
             openModal('modal-edit-user');
         }
 
         async function saveUserChanges(event) {
             event.preventDefault(); 
-            const id = document.getElementById('edit-user-id').value;
-            const name = document.getElementById('edit-user-name').value;
-            const email = document.getElementById('edit-user-email').value;
-            const role = document.getElementById('edit-user-role').value;
-            const status = document.getElementById('edit-user-status').value;
+            const payload = {
+                id: document.getElementById('edit-user-id').value,
+                name: document.getElementById('edit-user-name').value,
+                email: document.getElementById('edit-user-email').value,
+                role: document.getElementById('edit-user-role').value,
+                status: document.getElementById('edit-user-status').value
+            };
 
-            // Appel API update_user
             await fetch('api.php?action=update_user', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ id, name, email, role, status })
+                body: JSON.stringify(payload)
             });
 
-            loadUsers(); // Recharger
+            loadUsers();
             closeModal('modal-edit-user');
-            showToast("Utilisateur modifié avec succès", "success");
+            showToast("Utilisateur mis à jour", "success");
         }
 
         function deleteUser(id) {
-
             const user = users.find(u => u.id == id);
-            // PROTECTION : Si c'est un admin, on refuse l'action
-            if (user && user.role === 'admin') {
-                showToast("Impossible de supprimer un administrateur", "danger");
-                return;
-            }
+            if (user && user.role === 'admin') { showToast("Impossible de supprimer un administrateur", "danger"); return; }
             
             targetUserId = id;
             openModal('modal-delete-user');
@@ -615,8 +576,7 @@
             }
         }
 
-        // --- 6. ACTIONS CRUD (Jobs) ---
-
+        // --- GESTION OFFRES (Modération) ---
         async function validateJob(id) {
             await fetch('api.php?action=validate_job', {
                 method: 'POST',
@@ -624,162 +584,119 @@
                 body: JSON.stringify({ id: id })
             });
             loadJobs();
-            showToast("Offre validée et publiée", "success");
+            showToast("Offre approuvée", "success");
         }
 
-        async function deleteJob(id) {
-            if(confirm("Supprimer cette offre ?")) { 
-                await fetch(`api.php?action=delete_job&id=${id}`);
+        let targetJobId = null;
+        function openDeleteJobModal(id) {
+            targetJobId = id;
+            openModal('modal-delete-job');
+        }
+
+        async function confirmDeleteJob() {
+            if (targetJobId !== null) {
+                await fetch(`api.php?action=delete_job&id=${targetJobId}`);
                 loadJobs();
+                closeModal('modal-delete-job');
                 showToast("Offre supprimée", "danger");
+                targetJobId = null;
             }
         }
 
-        // --- FONCTION AJOUTÉE : Voir détails ---
         function viewJobDetails(id) {
-            // CORRECTION ID: '=='
             const job = jobs.find(j => j.id == id);
             if(!job) return;
 
-            const content = `
+            const companyInitial = job.company ? escapeHtml(job.company[0].toUpperCase()) : 'E';
+
+            document.getElementById('job-details-content').innerHTML = `
                 <div class="flex items-center gap-4 mb-4">
                     <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold text-xl">
-                        ${job.company ? job.company[0].toUpperCase() : 'E'}
+                        ${companyInitial}
                     </div>
                     <div>
-                        <h4 class="font-bold text-lg text-slate-900">${job.title}</h4>
-                        <p class="text-sm text-slate-500">${job.company} • ${job.location}</p>
+                        <h4 class="font-bold text-lg text-slate-900">${escapeHtml(job.title)}</h4>
+                        <p class="text-sm text-slate-500">${escapeHtml(job.company)} • ${escapeHtml(job.location)}</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div class="bg-slate-50 p-3 rounded border border-slate-100">
                         <span class="block text-xs text-slate-400 font-bold uppercase">Type</span>
-                        <span class="font-medium text-slate-800">${job.type}</span>
+                        <span class="font-medium text-slate-800">${escapeHtml(job.type)}</span>
                     </div>
                     <div class="bg-slate-50 p-3 rounded border border-slate-100">
                         <span class="block text-xs text-slate-400 font-bold uppercase">Secteur</span>
-                        <span class="font-medium text-slate-800 capitalize">${job.sector || 'Non défini'}</span>
+                        <span class="font-medium text-slate-800 capitalize">${escapeHtml(job.sector || 'Non défini')}</span>
                     </div>
                 </div>
                 <div class="text-sm text-slate-600 bg-slate-50 p-4 rounded border border-slate-100 h-32 overflow-y-auto">
                     <p><strong>Description :</strong></p>
-                    <p class="mt-1">${job.description || "Aucune description fournie pour cette offre."}</p>
+                    <p class="mt-1">${escapeHtml(job.description || "Aucune description fournie.")}</p>
                 </div>
             `;
-
-            document.getElementById('job-details-content').innerHTML = content;
             openModal('modal-job-details');
         }
 
-        // --- 7. NAVIGATION & UI ---
-
-        function switchView(viewId) {
-            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active-link'));
-            document.getElementById('view-' + viewId).classList.add('active');
-            document.getElementById('nav-' + viewId).classList.add('active-link');
-        }
-
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            
-            const colors = type === 'success' ? 'bg-green-500' : 'bg-red-500';
-            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-
-            toast.className = `toast flex items-center gap-3 ${colors} text-white px-4 py-3 rounded-lg shadow-lg min-w-[300px]`;
-            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span class="font-medium text-sm">${message}</span>`;
-
-            container.appendChild(toast);
-
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(10px)';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        // --- 8. GESTION DES SIGNALEMENTS ---
+        // --- GESTION DES SIGNALEMENTS ---
         let reports = [];
+        let reportIdToAction = null;
+        let jobIdToAction = null;
 
         async function loadReports() {
             try {
                 const res = await fetch('api.php?action=get_reports');
                 reports = await res.json();
                 renderReportsTable();
-            } catch(e) { console.error("Erreur reports", e); }
+            } catch(e) { console.error("Reports load failed", e); }
         }
 
         function renderReportsTable() {
             const tbody = document.getElementById('reports-table-body');
             
             if(reports.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-8 text-slate-400">Aucun signalement à traiter.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-8 text-slate-400">Aucun signalement en attente.</td></tr>';
                 return;
             }
 
             tbody.innerHTML = reports.map(r => {
-                let reasonBadge = '';
-                
-                // Gestion des badges de couleur selon la raison
-                if(r.reason === 'fraud') {
-                    reasonBadge = '<span class="inline-block bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold border border-red-200">Fraude</span>';
-                } else if(r.reason === 'spam') {
-                    reasonBadge = '<span class="inline-block bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold border border-orange-200">Spam</span>';
-                } else if(r.reason === 'discrimination') {
-                    // J'ai mis text-yellow-800 pour que ce soit bien lisible sur le fond jaune
-                    reasonBadge = '<span class="inline-block bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold border border-yellow-200">Discrimination</span>';
-                } else {
-                    reasonBadge = '<span class="inline-block bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-bold border border-slate-200">Autre</span>';
-                }
+                let reasonBadge = '<span class="inline-block bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-bold border border-slate-200">Autre</span>';
+                if(r.reason === 'fraud') reasonBadge = '<span class="inline-block bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold border border-red-200">Fraude</span>';
+                if(r.reason === 'spam') reasonBadge = '<span class="inline-block bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold border border-orange-200">Spam</span>';
+                if(r.reason === 'discrimination') reasonBadge = '<span class="inline-block bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold border border-yellow-200">Discrimination</span>';
 
                 return `
                 <tr class="hover:bg-slate-50 transition border-b border-slate-100 last:border-0">
                     <td class="p-4 align-middle">
-                        <div class="font-bold text-slate-900">${r.job_title}</div>
-                        <div class="text-xs text-slate-500 uppercase">${r.company}</div>
+                        <div class="font-bold text-slate-900">${escapeHtml(r.job_title)}</div>
+                        <div class="text-xs text-slate-500 uppercase">${escapeHtml(r.company)}</div>
                     </td>
-
                     <td class="p-4 align-middle">${reasonBadge}</td>
-
                     <td class="p-4 text-slate-600 align-middle">
                         <div class="flex items-center gap-2">
                             <div class="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-[10px] font-bold text-slate-600 shadow-sm">ET</div>
-                            <span class="text-sm font-medium">${r.reporter_name}</span>
+                            <span class="text-sm font-medium">${escapeHtml(r.reporter_name)}</span>
                         </div>
                     </td>
-
                     <td class="p-4 text-slate-500 align-middle text-sm">${new Date(r.created_at).toLocaleDateString('fr-FR')}</td>
-
                     <td class="p-4 align-middle">
                         <div class="flex justify-end items-center gap-2">
                             <button onclick="viewJobDetails(${r.job_id})" class="bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-300 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-1">
                                 <i class="fa-solid fa-eye"></i> Voir
                             </button>
-                            
                             <button onclick="openDeleteReportedModal(${r.job_id}, ${r.id})" class="bg-white border border-red-200 text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-1">
                                 <i class="fa-solid fa-trash"></i> Supprimer
                             </button>
-                            
                             <button onclick="openDismissReportModal(${r.id})" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-1">
                                 <i class="fa-solid fa-check"></i> Ignorer
                             </button>
                         </div>
                     </td>
-                </tr>
-                `;
+                </tr>`;
             }).join('');
         }
 
-        // --- VARIABLES GLOBALES POUR LES MODALES SIGNALEMENT ---
-        let reportIdToAction = null;
-        let jobIdToAction = null;
-
-        // 1. FONCTIONS D'OUVERTURE (Appelées par les boutons du tableau)
-        
         function openDeleteReportedModal(jobId, reportId) {
-            jobIdToAction = jobId;
-            reportIdToAction = reportId;
+            jobIdToAction = jobId; reportIdToAction = reportId;
             openModal('modal-delete-reported');
         }
 
@@ -788,45 +705,55 @@
             openModal('modal-dismiss-report');
         }
 
-        // 2. FONCTIONS DE CONFIRMATION (Appelées par les boutons des modales)
-
         async function confirmDeleteReported() {
             if (jobIdToAction && reportIdToAction) {
                 try {
-                    // 1. Supprimer l'offre
                     await fetch(`api.php?action=delete_job&id=${jobIdToAction}`);
-                    // 2. Supprimer le signalement
                     await fetch(`api.php?action=delete_report&id=${reportIdToAction}`);
-                    
-                    showToast("Offre supprimée et signalement traité", "success");
-                    
-                    // Rafraîchir les tables
-                    loadReports();
-                    loadJobs();
-                    
-                    // Fermer la modale
+                    showToast("Offre et signalement supprimés", "success");
+                    loadReports(); loadJobs();
                     closeModal('modal-delete-reported');
-                } catch (e) {
-                    console.error(e);
-                    showToast("Erreur lors du traitement", "danger");
-                }
+                } catch (e) { showToast("Erreur système", "danger"); }
             }
         }
 
         async function confirmDismissReport() {
             if (reportIdToAction) {
                 try {
-                    // Supprimer le signalement uniquement
                     await fetch(`api.php?action=delete_report&id=${reportIdToAction}`);
-                    
                     showToast("Signalement ignoré", "success");
                     loadReports();
                     closeModal('modal-dismiss-report');
-                } catch (e) {
-                    console.error(e);
-                    showToast("Erreur lors de l'action", "danger");
-                }
+                } catch (e) { showToast("Erreur système", "danger"); }
             }
+        }
+
+        // --- NAVIGATION VISUELLE ---
+        function switchView(viewId) {
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active-link'));
+            document.getElementById('view-' + viewId).classList.add('active');
+            document.getElementById('nav-' + viewId).classList.add('active-link');
+        }
+
+        // --- GESTION DES NOTIFICATIONS TOAST ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const colorClass = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+            toast.className = `toast flex items-center gap-3 ${colorClass} text-white px-4 py-3 rounded-lg shadow-lg min-w-[300px]`;
+            toast.innerHTML = `<i class="fa-solid ${iconClass}"></i> <span class="font-medium text-sm">${message}</span>`;
+            
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
     </script>
 </body>

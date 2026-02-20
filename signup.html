@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Créer un compte - ESTIA</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -27,9 +28,10 @@
 
     <style>
         body { font-family: 'Inter', sans-serif; }
-        /* Pas d'animations CSS pour être instantané */
-        .modal { display: none; } /* Caché par défaut */
-        .modal.flex { display: flex; } /* Affiché en flex */
+        
+        /* Modale */
+        #modal-generic.hidden { display: none; }
+        #modal-generic.flex { display: flex; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
@@ -40,7 +42,7 @@
                 <div class="flex items-center gap-8">
                     <a href="login.html" class="text-2xl font-bold tracking-tight">ESTIA</a>
                 </div>
-                <a href="login.html" class="text-sm font-medium hover:text-slate-300">Retour à la connexion</a>
+                <a href="login.html" class="text-sm font-medium hover:text-slate-300 transition-colors">Retour à la connexion</a>
             </div>
         </div>
     </nav>
@@ -55,27 +57,27 @@
             <form onsubmit="handleSignup(event)" class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Prénom</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1" for="firstname">Prénom</label>
                         <input type="text" id="firstname" required class="w-full px-4 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent outline-none">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Nom</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1" for="lastname">Nom</label>
                         <input type="text" id="lastname" required class="w-full px-4 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent outline-none">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1" for="email">Email</label>
                     <input type="email" id="email" required placeholder="p.nom@mail.com" class="w-full px-4 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent outline-none">
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Mot de passe</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1" for="password">Mot de passe</label>
                     <input type="password" id="password" required class="w-full px-4 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent outline-none">
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Vous êtes ?</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1" for="role">Vous êtes ?</label>
                     <select id="role" onchange="toggleCompanyField()" class="w-full px-4 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent bg-white outline-none">
                         <option value="student">Étudiant</option>
                         <option value="recruiter">Recruteur / Entreprise</option>
@@ -83,16 +85,16 @@
                 </div>
 
                 <div id="company-field" class="hidden">
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Nom de l'entreprise</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1" for="company">Nom de l'entreprise</label>
                     <input type="text" id="company" placeholder="ex: Airbus, Safran..." class="w-full px-4 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent outline-none">
                 </div>
 
                 <div class="flex items-center gap-2 mt-2">
-                    <input type="checkbox" required id="terms" class="rounded text-accent focus:ring-accent">
-                    <label for="terms" class="text-xs text-slate-500 cursor-pointer">J'accepte les conditions d'utilisation</label>
+                    <input type="checkbox" required id="terms" class="rounded text-accent focus:ring-accent cursor-pointer">
+                    <label for="terms" class="text-xs text-slate-500 cursor-pointer select-none">J'accepte les conditions d'utilisation</label>
                 </div>
 
-                <button type="submit" class="w-full bg-primary hover:bg-slate-800 text-white font-medium py-2.5 rounded-md transition mt-4 shadow-md">
+                <button type="submit" class="w-full bg-primary hover:bg-slate-800 text-white font-medium py-2.5 rounded-md transition mt-4 shadow-sm">
                     Créer mon compte
                 </button>
             </form>
@@ -115,7 +117,18 @@
     </div>
 
     <script>
-        // --- FONCTIONS MODALE ---
+        // Protection XSS
+        function escapeHtml(text) {
+            if (text == null) return "";
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        //Gestionnaires de la modale
         function showModal(title, contentHtml) {
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-content').innerHTML = contentHtml;
@@ -131,47 +144,45 @@
             m.classList.remove('flex');
         }
 
-        // --- LOGIQUE INSCRIPTION ---
+        // Contrôle d'interface utilisateur 
+        // Affiche ou masque champ entreprise selon profil sélectionné
         function toggleCompanyField() {
             const role = document.getElementById('role').value;
             const field = document.getElementById('company-field');
+            const companyInput = document.getElementById('company');
+            
             if (role === 'recruiter') {
                 field.classList.remove('hidden');
-                document.getElementById('company').setAttribute('required', 'true');
+                companyInput.setAttribute('required', 'true');
             } else {
                 field.classList.add('hidden');
-                document.getElementById('company').removeAttribute('required');
+                companyInput.removeAttribute('required');
+                companyInput.value = ''; // Réinitialisation de valeur
             }
         }
 
+        //Soumission formulaire d'inscription
         async function handleSignup(e) {
             e.preventDefault();
             
-            // Récupération des valeurs
-            const firstname = document.getElementById('firstname').value;
-            const lastname = document.getElementById('lastname').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const role = document.getElementById('role').value;
-            const company = document.getElementById('company').value;
+            const payload = {
+                name: document.getElementById('firstname').value.trim() + ' ' + document.getElementById('lastname').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                password: document.getElementById('password').value,
+                role: document.getElementById('role').value,
+                company: document.getElementById('company').value.trim()
+            };
 
             try {
                 const response = await fetch('api.php?action=signup', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: firstname + ' ' + lastname,
-                        email: email,
-                        password: password,
-                        role: role,
-                        company: company
-                    })
+                    body: JSON.stringify(payload)
                 });
                 
                 const result = await response.json();
                 
                 if(result.success) {
-                    // MODALE SUCCÈS
                     showModal("Compte créé !", `
                         <div class="flex flex-col items-center">
                             <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4 text-2xl">
@@ -184,14 +195,15 @@
                         </div>
                     `);
                 } else {
-                    // MODALE ERREUR
+                    // Sécurisation du message retour avant affichage
+                    const safeMessage = escapeHtml(result.message);
                     showModal("Erreur", `
                         <div class="flex flex-col items-center">
                             <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4 text-2xl">
                                 <i class="fa-solid fa-triangle-exclamation"></i>
                             </div>
                             <p class="text-slate-800 font-bold mb-1">Impossible de créer le compte</p>
-                            <p class="text-slate-500 mb-6 text-sm">${result.message}</p>
+                            <p class="text-slate-500 mb-6 text-sm">${safeMessage}</p>
                             <button onclick="closeModal()" class="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 transition w-full">
                                 Fermer
                             </button>
@@ -199,12 +211,11 @@
                     `);
                 }
             } catch (error) {
-                console.error(error);
-                // MODALE ERREUR TECHNIQUE
+                console.error('Erreur lors de la requête signup:', error);
                 showModal("Erreur Technique", `
                     <div class="text-center">
-                        <p class="text-slate-600 mb-4">Une erreur de connexion est survenue.</p>
-                        <button onclick="closeModal()" class="px-4 py-2 bg-slate-200 rounded text-slate-700">Fermer</button>
+                        <p class="text-slate-600 mb-4">Une erreur de connexion au serveur est survenue.</p>
+                        <button onclick="closeModal()" class="px-4 py-2 bg-slate-200 rounded text-slate-700 font-medium w-full">Fermer</button>
                     </div>
                 `);
             }

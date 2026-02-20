@@ -10,253 +10,327 @@
     <script>
         tailwind.config = { theme: { extend: { colors: { primary: '#0f172a', 'primary-foreground': '#f8fafc', accent: '#3b82f6' } } } }
     </script>
-</head>
-    <body class="bg-slate-50 min-h-screen">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Gestion de l'affichage des onglets */
+        .view { display: none; }
+        .view.active { display: block; }
+        
+        /* Navigation */
+        .nav-link { cursor: pointer; transition: all 0.2s; border-bottom: 2px solid transparent; color: #94a3b8; }
+        .nav-link:hover { background-color: rgba(255,255,255,0.1); color: #f8fafc; }
+        .nav-link.active-link { background-color: rgba(255,255,255,0.15); border-bottom: 2px solid #3b82f6; color: #f8fafc; }
 
-        <nav class="sticky top-0 z-50 bg-primary text-primary-foreground shadow-lg">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between h-16">
-                    <div class="flex items-center gap-8">
-                        <a href="login.html" class="text-2xl font-bold tracking-tight">ESTIA</a>
-                        <div class="flex items-center gap-1">
-                            <button onclick="switchView('jobs')" id="nav-jobs" class="nav-link px-4 py-2 rounded-md flex items-center gap-2 text-sm font-medium">
-                                <i class="fa-solid fa-briefcase"></i> Offres
-                            </button>
-                            <button onclick="switchView('login')" id="nav-login" class="nav-link active-link px-4 py-2 rounded-md flex items-center gap-2 text-sm font-medium">
-                                <i class="fa-solid fa-right-to-bracket"></i> Connexion
-                            </button>
-                        </div>
+        /* Styles modale */
+        #modal-generic.hidden { display: none; }
+        #modal-generic.flex { display: flex; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+    <nav class="sticky top-0 z-50 bg-primary text-primary-foreground shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-8">
+                    <a href="login.html" class="text-2xl font-bold tracking-tight">ESTIA</a>
+                    <div class="flex items-center gap-1">
+                        <button onclick="switchView('jobs')" id="nav-jobs" class="nav-link px-4 py-2 rounded-md flex items-center gap-2 text-sm font-medium">
+                            <i class="fa-solid fa-briefcase"></i> Offres
+                        </button>
+                        <button onclick="switchView('login')" id="nav-login" class="nav-link active-link px-4 py-2 rounded-md flex items-center gap-2 text-sm font-medium">
+                            <i class="fa-solid fa-right-to-bracket"></i> Connexion
+                        </button>
                     </div>
                 </div>
             </div>
-        </nav>
+        </div>
+    </nav>
 
-        <main class="max-w-7xl mx-auto px-4 py-8">
-            
-            <section id="view-login" class="view active">
-                <div class="max-w-md mx-auto mt-10">
-                    <div class="card p-8">
-                        <div class="text-center mb-8">
-                            <div class="inline-flex items-center justify-center w-16 h-16 bg-slate-100 rounded-full mb-4">
-                                <i class="fa-solid fa-graduation-cap text-3xl text-primary"></i>
-                            </div>
-                            <h1 class="text-2xl font-bold text-slate-900">Connexion</h1>
-                            <p class="text-slate-500 mt-2">Accédez à votre espace personnel</p>
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        
+        <section id="view-login" class="view active">
+            <div class="max-w-md mx-auto mt-10">
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+                    <div class="text-center mb-8">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-slate-100 rounded-full mb-4">
+                            <i class="fa-solid fa-graduation-cap text-3xl text-primary"></i>
+                        </div>
+                        <h1 class="text-2xl font-bold text-slate-900">Connexion</h1>
+                        <p class="text-slate-500 mt-2">Accédez à votre espace personnel</p>
+                    </div>
+                    
+                    <div id="login-alert" class="hidden bg-yellow-50 text-yellow-800 p-3 rounded mb-4 text-sm border border-yellow-200">
+                        <i class="fa-solid fa-lock mr-2"></i> Identifiants incorrects.
+                    </div>
+
+                    <form onsubmit="handleLogin(event)" class="space-y-5">
+                        <div class="bg-blue-50 p-3 rounded text-xs text-blue-700 mb-2 border border-blue-100">
+                            <p><strong>Comptes par défaut (BDD) :</strong></p>
+                            <p>• Étudiant : marie@estia.fr / 1234</p>
+                            <p>• Recruteur : rh@airbus.com / 1234</p>
+                            <p>• Admin : admin@estia.fr / 1234</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Email</label>
+                            <input type="email" id="login-email" required placeholder="ex: etudiant@estia.fr" 
+                                    class="w-full px-4 py-2.5 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Mot de passe</label>
+                            <input type="password" id="login-password" required placeholder="••••••••" 
+                                    class="w-full px-4 py-2.5 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent outline-none">
                         </div>
                         
-                        <div id="login-alert" class="hidden bg-yellow-50 text-yellow-800 p-3 rounded mb-4 text-sm border border-yellow-200">
-                            <i class="fa-solid fa-lock mr-2"></i> Identifiants incorrects.
-                        </div>
+                        <button type="submit" class="w-full bg-primary hover:bg-slate-800 text-white font-medium py-2.5 rounded-md transition flex items-center justify-center gap-2 shadow-sm">
+                            <i class="fa-solid fa-right-to-bracket"></i> Se connecter
+                        </button>
+                    </form>
 
-                        <form onsubmit="handleLogin(event)" class="space-y-5">
-                            <div class="bg-blue-50 p-3 rounded text-xs text-blue-700 mb-2 border border-blue-100">
-                                <p><strong>Comptes par défaut (BDD) :</strong></p>
-                                <p>• Étudiant : marie@estia.fr / 1234</p>
-                                <p>• Recruteur : rh@airbus.com / 1234</p>
-                                <p>• Admin : admin@estia.fr / 1234</p>
-                            </div>
+                    <div class="mt-6 text-center border-t border-slate-100 pt-6">
+                        <p class="text-slate-500 text-sm">Pas encore de compte ?</p>
+                        <a href="signup.html" class="text-accent font-bold hover:underline mt-1 inline-block">Créer un compte</a>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-2">Email</label>
-                                <input type="email" id="login-email" required placeholder="ex: etudiant@estia.fr" 
-                                        class="w-full px-4 py-2.5 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-2">Mot de passe</label>
-                                <input type="password" id="login-password" required placeholder="••••••••" 
-                                        class="w-full px-4 py-2.5 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent">
+        <section id="view-jobs" class="view">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-slate-900">Offres de Stage</h1>
+                <p class="text-slate-500 mt-2">Découvrez les opportunités publiques</p>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4">
+                <div class="flex-1 relative">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="job-search-login" placeholder="Rechercher une offre..." class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent outline-none transition">
+                </div>
+                <select id="sector-filter-login" class="px-4 py-2 border border-slate-300 rounded-md outline-none focus:ring-2 focus:ring-accent bg-white">
+                    <option value="">Tous les secteurs</option>
+                    <option value="aero">Aéronautique</option>
+                    <option value="tech">Tech / IT</option>
+                    <option value="energie">Énergie</option>
+                    <option value="conseil">Conseil</option>
+                </select>
+                <select id="contract-filter-login" class="px-4 py-2 border border-slate-300 rounded-md outline-none focus:ring-2 focus:ring-accent bg-white">
+                    <option>Tous les types</option>
+                    <option>Stage</option>
+                    <option>Alternance</option>
+                    <option>CDI</option>
+                    <option>CDD</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="jobs-grid-login">
+                </div>
+        </section>
+
+    </main>
+
+    <div id="modal-generic" class="fixed inset-0 z-[100] hidden items-center justify-center">
+        <div class="absolute inset-0 bg-primary/60 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-0 relative z-10 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/80">
+                <h3 id="modal-title" class="font-bold text-lg text-slate-900">Notification</h3>
+                <button onclick="closeModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div id="modal-content" class="p-6 text-center">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        let jobs = [];
+
+        // Protection XSS
+        function escapeHtml(text) {
+            if (text == null) return "";
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            loadPublicJobs();
+        });
+
+        // Modales
+        function showModal(title, contentHtml) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-content').innerHTML = contentHtml;
+            const m = document.getElementById('modal-generic');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeModal() {
+            const m = document.getElementById('modal-generic');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        // Chargement des données publiques
+        async function loadPublicJobs() {
+            try {
+                const response = await fetch('api.php?action=get_jobs');
+                jobs = await response.json();
+                renderJobsGridLogin(jobs);
+            } catch (error) {
+                console.error('Data loading error:', error);
+            }
+        }
+
+        function setupEventListeners() {
+            const searchInput = document.getElementById('job-search-login');
+            if(searchInput) searchInput.addEventListener('input', filterJobs);
+            
+            const sectorFilter = document.getElementById('sector-filter-login');
+            if(sectorFilter) sectorFilter.addEventListener('change', filterJobs);
+            
+            const contractFilter = document.getElementById('contract-filter-login');
+            if(contractFilter) contractFilter.addEventListener('change', filterJobs);
+        }
+
+        // Authentification
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const response = await fetch('api.php?action=login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    // Routage selon le profil
+                    const routes = {
+                        'recruiter': 'rh.html',
+                        'admin': 'admin.html',
+                        'student': 'student.html'
+                    };
+                    window.location.href = routes[data.role] || 'student.html';
+                } else {
+                    const alertBox = document.getElementById('login-alert');
+                    alertBox.textContent = data.message;
+                    alertBox.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Auth error:', error);
+                showModal("Erreur de connexion", "<p class='text-slate-600 mb-4'>Impossible de joindre le serveur d'authentification.</p><button onclick='closeModal()' class='px-4 py-2 bg-slate-200 rounded text-slate-700'>Fermer</button>");
+            }
+        }
+
+        // Moteur de recherche local
+        function filterJobs() {
+            const searchEl = document.getElementById('job-search-login');
+            const search = searchEl ? searchEl.value.toLowerCase() : '';
+
+            const sectorEl = document.getElementById('sector-filter-login');
+            const sector = sectorEl ? sectorEl.value : '';
+
+            const contractEl = document.getElementById('contract-filter-login');
+            const contract = contractEl ? contractEl.value : '';
+
+            const filtered = jobs.filter(job => {
+                const matchesSearch = job.title.toLowerCase().includes(search) || job.company.toLowerCase().includes(search);
+                const matchesSector = sector === "" || sector === "Tous les secteurs" || job.sector === sector;
+                const matchesContract = contract === "" || contract === "Tous les types" || job.type.includes(contract);
+                return matchesSearch && matchesSector && matchesContract;
+            });
+            
+            renderJobsGridLogin(filtered);
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active-link'));
+            document.getElementById('view-' + viewId).classList.add('active');
+            document.getElementById('nav-' + viewId).classList.add('active-link');
+        }
+
+        // Actions nécessitant une session active
+        function toggleFavorite(id) {
+            requireLogin();
+        }
+
+        function requireLogin() {
+            switchView('login');
+            const alertBox = document.getElementById('login-alert');
+            if(alertBox) {
+                alertBox.classList.remove('hidden');
+                alertBox.innerHTML = '<i class="fa-solid fa-lock mr-2"></i> Veuillez vous connecter pour accéder à cette fonctionnalité.';
+            }
+            window.scrollTo(0, 0);
+        }
+
+        // Rendu UI de grille publique
+        function renderJobsGridLogin(filteredJobs = jobs) {
+            const grid = document.getElementById('jobs-grid-login');
+            if(!grid) return; 
+
+            if (filteredJobs.length === 0) {
+                grid.innerHTML = '<p class="col-span-full text-center text-slate-500 py-8">Aucune offre ne correspond à votre recherche.</p>';
+                return;
+            }
+
+            const sectorNames = { 'aero': 'Aéronautique', 'tech': 'Tech / IT', 'energie': 'Énergie', 'conseil': 'Conseil' };
+
+            grid.innerHTML = filteredJobs.map(job => {
+                const sectorLabel = sectorNames[job.sector] || job.sector;
+                const logoDisplay = job.company ? job.company.substring(0, 2).toUpperCase() : 'ES';
+
+                return `
+                    <div class="bg-white border border-slate-200 rounded-xl p-6 hover:shadow-lg transition cursor-pointer flex flex-col justify-between group">  
+                        <div class="flex justify-between items-start mb-4"> 
+                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center font-bold text-lg border border-blue-100">
+                                ${escapeHtml(logoDisplay)}
                             </div>
                             
-                            <button type="submit" class="w-full bg-primary hover:bg-slate-800 text-white font-medium py-2.5 rounded-md transition flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-right-to-bracket"></i> Se connecter
-                            </button>
-                        </form>
-
-                        <div class="mt-6 text-center border-t border-slate-100 pt-6">
-                            <p class="text-slate-500 text-sm">Pas encore de compte ?</p>
-                            <a href="signup.html" class="text-accent font-bold hover:underline mt-1 inline-block">Créer un compte</a>
+                            <div class="flex flex-col items-end gap-2">
+                                <div class="flex gap-2">
+                                    <span class="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-full uppercase tracking-wide border border-slate-200">
+                                        ${escapeHtml(sectorLabel)}
+                                    </span>
+                                    <span class="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full uppercase tracking-wide">
+                                        ${escapeHtml(job.type)}
+                                    </span>
+                                </div>
+                                <button onclick="toggleFavorite(${job.id})" class="p-1 rounded-full hover:bg-slate-50 transition mr-1" title="Ajouter aux favoris">
+                                    <i class="fa-regular fa-heart text-slate-400 text-xl hover:text-red-500 transition-colors"></i>
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="view-jobs" class="view">
-                <div class="text-center mb-8">
-                    <h1 class="text-3xl font-bold text-slate-900">Offres de Stage</h1>
-                    <p class="text-slate-500 mt-2">Découvrez les opportunités publiques</p>
-                </div>
-
-                <div class="card p-6 mb-6 flex flex-col md:flex-row gap-4">
-                    <div class="flex-1 relative">
-                        <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="job-search-login" placeholder="Rechercher une offre..." class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent focus:border-accent transition">
-                    </div>
-                    <select id="sector-filter-login" class="px-4 py-2 border rounded-md"><option value="">Tous les secteurs</option><option value="aero">Aéronautique</option><option value="tech">Tech / IT</option><option value="energie">Énergie</option><option value="conseil">Conseil</option></select>
-                    <select id="contract-filter-login" class="px-4 py-2 border rounded-md"><option>Tous les types</option><option>Stage</option><option>Alternance</option><option>CDI</option><option>CDD</option></select>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="jobs-grid-login">
-                    </div>
-            </section>
-
-        </main>
-        <script>
-            let jobs = [];
-
-            document.addEventListener('DOMContentLoaded', () => {
-                setupEventListeners();
-                loadPublicJobs();
-            });
-
-            async function loadPublicJobs() {
-                try {
-                    const response = await fetch('api.php?action=get_jobs');
-                    jobs = await response.json();
-                    renderJobsGridLogin(jobs);
-                } catch (error) {
-                    console.error('Erreur chargement offres:', error);
-                }
-            }
-
-            function setupEventListeners() {
-                const searchInput = document.getElementById('job-search-login');
-                if(searchInput) searchInput.addEventListener('input', filterJobs);
-                
-                const sectorFilter = document.getElementById('sector-filter-login');
-                if(sectorFilter) sectorFilter.addEventListener('change', filterJobs);
-                
-                const contractFilter = document.getElementById('contract-filter-login');
-                if(contractFilter) contractFilter.addEventListener('change', filterJobs);
-            }
-
-            async function handleLogin(e) {
-                e.preventDefault();
-                const email = document.getElementById('login-email').value;
-                const password = document.getElementById('login-password').value;
-
-                try {
-                    const response = await fetch('api.php?action=login', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ email, password })
-                    });
-                    const data = await response.json();
-
-                    if (data.success) {
-                        if(data.role === 'recruiter') window.location.href = 'rh.html';
-                        else if(data.role === 'admin') window.location.href = 'admin.html';
-                        else window.location.href = 'student.html';
-                    } else {
-                        const alert = document.getElementById('login-alert');
-                        alert.textContent = data.message;
-                        alert.classList.remove('hidden');
-                    }
-                } catch (error) {
-                    console.error(error);
-                    alert("Erreur serveur");
-                }
-            }
-
-            function filterJobs() {
-                const searchEl = document.getElementById('job-search-login');
-                const search = searchEl ? searchEl.value.toLowerCase() : '';
-
-                const sectorEl = document.getElementById('sector-filter-login');
-                const sector = sectorEl ? sectorEl.value : '';
-
-                const contractEl = document.getElementById('contract-filter-login');
-                const contract = contractEl ? contractEl.value : '';
-
-                const filtered = jobs.filter(job => {
-                    const matchesSearch = job.title.toLowerCase().includes(search) || job.company.toLowerCase().includes(search);
-                    const matchesSector = sector === "" || sector === "Tous les secteurs" || job.sector === sector;
-                    const matchesContract = contract === "" || contract === "Tous les types" || job.type.includes(contract);
-                    return matchesSearch && matchesSector && matchesContract;
-                });
-                
-                renderJobsGridLogin(filtered);
-            }
-
-            function switchView(viewId) {
-                document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-                document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active-link'));
-                document.getElementById('view-' + viewId).classList.add('active');
-                document.getElementById('nav-' + viewId).classList.add('active-link');
-            }
-
-            function toggleFavorite(id) {
-                requireLogin();
-            }
-
-            function requireLogin() {
-                switchView('login');
-                const alert = document.getElementById('login-alert');
-                if(alert) {
-                    alert.classList.remove('hidden');
-                    alert.innerHTML = '<i class="fa-solid fa-lock mr-2"></i> Veuillez vous connecter.';
-                }
-                window.scrollTo(0, 0);
-            }
-
-            function renderJobsGridLogin(filteredJobs = jobs) {
-                const grid = document.getElementById('jobs-grid-login');
-                if(!grid) return; 
-
-                if (filteredJobs.length === 0) {
-                    grid.innerHTML = '<p class="col-span-full text-center text-slate-500 py-8">Aucune offre ne correspond à votre recherche.</p>';
-                    return;
-                }
-
-                const sectorNames = { 'aero': 'Aéronautique', 'tech': 'Tech / IT', 'energie': 'Énergie', 'conseil': 'Conseil' };
-
-                grid.innerHTML = filteredJobs.map(job => {
-                    const sectorLabel = sectorNames[job.sector] || job.sector;
-                    
-                    // --- MODIFICATION ICI : 2 Lettres pour le logo ---
-                    // Si l'entreprise existe, on prend les 2 premiers caractères en majuscule, sinon 'ES'
-                    const logoDisplay = job.company ? job.company.substring(0, 2).toUpperCase() : 'ES';
-
-                    return `
-                        <div class="card p-6 hover:shadow-lg transition cursor-pointer flex flex-col justify-between group">  
-                            <div class="flex justify-between items-start mb-4"> 
-                                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center font-bold text-lg">
-                                    ${logoDisplay}
-                                </div>
-                                
-                                <div class="flex flex-col items-end gap-2">
-                                    <div class="flex gap-2">
-                                        <span class="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-full uppercase tracking-wide border border-slate-200">
-                                            ${sectorLabel}
-                                        </span>
-                                        <span class="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full uppercase tracking-wide">
-                                            ${job.type}
-                                        </span>
-                                    </div>
-                                    <button onclick="toggleFavorite(${job.id})" class="p-1 rounded-full hover:bg-slate-50 transition mr-1" title="Ajouter aux favoris">
-                                        <i class="fa-regular fa-heart text-slate-400 text-xl hover:text-red-500 transition-colors"></i>
-                                    </button>
-                                </div>
-                            </div>
-                                
-                            <div>
-                                <h3 class="font-bold text-lg text-slate-900">${job.title}</h3>
-                                <p class="text-slate-600 text-sm mb-1">${job.company}</p>
-                                <p class="text-slate-400 text-sm flex items-center gap-1 mb-4">
-                                    <i class="fa-solid fa-location-dot"></i> ${job.location}
-                                </p>
-                            </div>
-                                
-                            <div class="flex gap-2 mt-auto">
-                                <button onclick="requireLogin()" class="flex-1 bg-primary hover:bg-slate-800 text-white text-sm font-medium py-2 rounded-md transition">
-                                    Postuler
-                                </button>
-                                <button onclick="requireLogin()" class="px-4 py-2 border border-slate-300 text-slate-600 text-sm font-medium rounded-md hover:bg-slate-50 transition">
-                                    Détails
-                                </button>
-                            </div>
-                        </div>`
-                }).join('');
-            }
-        </script>
-    </body>
+                            
+                        <div>
+                            <h3 class="font-bold text-lg text-slate-900">${escapeHtml(job.title)}</h3>
+                            <p class="text-slate-600 text-sm mb-1">${escapeHtml(job.company)}</p>
+                            <p class="text-slate-400 text-sm flex items-center gap-1 mb-6">
+                                <i class="fa-solid fa-location-dot"></i> ${escapeHtml(job.location)}
+                            </p>
+                        </div>
+                            
+                        <div class="flex gap-2 mt-auto border-t border-slate-100 pt-4">
+                            <button onclick="requireLogin()" class="flex-1 bg-primary hover:bg-slate-800 text-white text-sm font-medium py-2 rounded-md transition shadow-sm">
+                                Postuler
+                            </button>
+                            <button onclick="requireLogin()" class="px-4 py-2 border border-slate-300 text-slate-600 text-sm font-medium rounded-md hover:bg-slate-50 transition">
+                                Détails
+                            </button>
+                        </div>
+                    </div>`
+            }).join('');
+        }
+    </script>
+</body>
 </html>
