@@ -6,7 +6,7 @@ Read this in [English](README.en.md) | Leer esto en [Español](README.es.md)
 ![Langage](https://img.shields.io/badge/Backend-PHP-purple)
 ![Frontend](https://img.shields.io/badge/Frontend-TailwindCSS-teal)
 
-## ℹ️ À propos de ce projet
+## À propos de ce projet
 
 **⚠️ Contexte Académique :**
 Ce projet a été développé dans le cadre d'un cursus académique à l'**ESTIA**. Il s'agit d'une application web développée en **local** à des fins pédagogiques. Elle n'a pas vocation à être déployée en production telle quelle, mais sert de démonstration de compétences en développement Fullstack (PHP/JS/SQL).
@@ -15,11 +15,11 @@ L'objectif était de créer une plateforme fonctionnelle mettant en relation des
 
 ---
 
-## ✨ Fonctionnalités Principales
+## Fonctionnalités Principales
 
 L'application est divisée en trois espaces distincts :
 
-### 👨‍🎓 Espace Étudiant
+### Espace Étudiant
 - **Tableau de bord :** Vue d'ensemble des candidatures et statistiques.
 - **Recherche d'offres :** Filtrage par secteur, type de contrat et recherche par mots-clés.
 - **Candidature :** Postuler aux offres, gestion des favoris.
@@ -27,20 +27,20 @@ L'application est divisée en trois espaces distincts :
 - **Signalement :** Possibilité de signaler une offre suspecte à l'administration.
 - **Profil :** Gestion des informations personnelles et upload de CV.
 
-### 💼 Espace Recruteur
+### Espace Recruteur
 - **Gestion des offres :** Création, modification et suppression d'offres de stage/emploi.
 - **Suivi des candidats :** Gestion des statuts (En attente, Entretien, Accepté, Refusé).
 - **Messagerie :** Contact direct avec les candidats.
 - **Notifications :** Alertes lors de la réception de messages.
 
-### 🛡️ Espace Administrateur
+### Espace Administrateur
 - **Vue globale :** Statistiques sur les utilisateurs et les offres.
 - **Gestion utilisateurs :** CRUD (Créer, Lire, Mettre à jour, Supprimer) sur les étudiants et recruteurs.
 - **Modération :** Validation des offres en attente et traitement des signalements (suppression ou ignorance).
 
 ---
 
-## 🛠️ Stack Technique
+## Stack Technique
 
 * **Frontend :** HTML5, CSS3 (TailwindCSS via CDN), JavaScript (Vanilla ES6).
 * **Backend :** PHP (Natif, sans framework).
@@ -49,7 +49,7 @@ L'application est divisée en trois espaces distincts :
 
 ---
 
-## 🚀 Installation et Lancement
+## Installation et Lancement
 
 Ce projet est conçu pour tourner sur un serveur local (WAMP, XAMPP, MAMP ou Laragon).
 
@@ -75,7 +75,7 @@ Ce projet est conçu pour tourner sur un serveur local (WAMP, XAMPP, MAMP ou Lar
 
 ---
 
-## 🔑 Comptes de Démonstration
+## Comptes de Démonstration
 
 Pour tester les différents rôles, vous pouvez utiliser ces comptes (s'ils sont présents dans le fichier SQL importé) :
 
@@ -87,7 +87,7 @@ Pour tester les différents rôles, vous pouvez utiliser ces comptes (s'ils sont
 
 ---
 
-## 📂 Structure du Projet
+## Structure du Projet
 
 ```text
 /

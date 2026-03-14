@@ -6,7 +6,7 @@ Lire ceci en [Français](README.md) | Read this in [English](README.en.md)
 ![Lenguaje](https://img.shields.io/badge/Backend-PHP-purple)
 ![Frontend](https://img.shields.io/badge/Frontend-TailwindCSS-teal)
 
-## ℹ️ Sobre este proyecto
+## Sobre este proyecto
 
 **⚠️ Contexto Académico:**
 Este proyecto fue desarrollado como parte del plan de estudios en **ESTIA**. Es una aplicación web desarrollada **localmente** con fines pedagógicos. No está destinada a ser desplegada en producción tal cual, sino que sirve como demostración de competencias en desarrollo Fullstack (PHP/JS/SQL).
@@ -15,11 +15,11 @@ El objetivo era crear una plataforma funcional para conectar estudiantes y reclu
 
 ---
 
-## ✨ Funcionalidades Principales
+## Funcionalidades Principales
 
 La aplicación se divide en tres espacios distintos:
 
-### 👨‍🎓 Espacio Estudiante
+### Espacio Estudiante
 - **Panel de control:** Vista general de las candidaturas y estadísticas.
 - **Búsqueda de ofertas:** Filtrado por sector, tipo de contrato y palabras clave.
 - **Candidatura:** Postular a ofertas, gestión de favoritos.
@@ -27,20 +27,20 @@ La aplicación se divide en tres espacios distintos:
 - **Reportes:** Posibilidad de reportar una oferta sospechosa a la administración.
 - **Perfil:** Gestión de información personal y carga de CV.
 
-### 💼 Espacio Reclutador
+### Espacio Reclutador
 - **Gestión de ofertas:** Creación, modificación y eliminación de ofertas de pasantía/empleo.
 - **Seguimiento de candidatos:** Gestión de estados (Pendiente, Entrevista, Aceptado, Rechazado).
 - **Mensajería:** Contacto directo con los candidatos.
 - **Notificaciones:** Alertas al recibir mensajes.
 
-### 🛡️ Espacio Administrador
+### Espacio Administrador
 - **Vista global:** Estadísticas sobre usuarios y ofertas.
 - **Gestión de usuarios:** CRUD (Crear, Leer, Actualizar, Eliminar) sobre estudiantes y reclutadores.
 - **Moderación:** Validación de ofertas pendientes y tratamiento de reportes (eliminar o ignorar).
 
 ---
 
-## 🛠️ Stack Tecnológico
+## Stack Tecnológico
 
 * **Frontend:** HTML5, CSS3 (TailwindCSS vía CDN), JavaScript (Vanilla ES6).
 * **Backend:** PHP (Nativo, sin framework).
@@ -49,7 +49,7 @@ La aplicación se divide en tres espacios distintos:
 
 ---
 
-## 🚀 Instalación y Lanzamiento
+## Instalación y Lanzamiento
 
 Este proyecto está diseñado para ejecutarse en un servidor local (WAMP, XAMPP, MAMP o Laragon).
 
@@ -75,7 +75,7 @@ Este proyecto está diseñado para ejecutarse en un servidor local (WAMP, XAMPP,
 
 ---
 
-## 🔑 Cuentas de Demostración
+## Cuentas de Demostración
 
 Para probar los diferentes roles, puedes usar estas cuentas preconfiguradas (si están presentes en el archivo SQL importado):
 
@@ -87,7 +87,7 @@ Para probar los diferentes roles, puedes usar estas cuentas preconfiguradas (si 
 
 ---
 
-## 📂 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```text
 /

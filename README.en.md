@@ -6,7 +6,7 @@ Lire ceci en [Français](README.md) | Leer esto en [Español](README.es.md)
 ![Language](https://img.shields.io/badge/Backend-PHP-purple)
 ![Frontend](https://img.shields.io/badge/Frontend-TailwindCSS-teal)
 
-## ℹ️ About this Project
+## About this Project
 
 **⚠️ Academic Context:**
 This project was developed as part of an academic curriculum at **ESTIA**. It is a web application developed **locally** for educational purposes. It is not intended to be deployed in production as is, but serves as a demonstration of Fullstack development skills (PHP/JS/SQL).
@@ -15,11 +15,11 @@ The goal was to create a functional platform connecting students and recruiters,
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 The application is divided into three distinct areas:
 
-### 👨‍🎓 Student Area
+### Student Area
 - **Dashboard:** Overview of applications and statistics.
 - **Job Search:** Filtering by sector, contract type, and keyword search.
 - **Application:** Apply to offers, manage favorites.
@@ -27,20 +27,20 @@ The application is divided into three distinct areas:
 - **Reporting:** Ability to report suspicious offers to the administration.
 - **Profile:** Manage personal information and CV uploads.
 
-### 💼 Recruiter Area
+### Recruiter Area
 - **Job Management:** Create, edit, and delete internship/job offers.
 - **Candidate Tracking:** Manage statuses (Pending, Interview, Accepted, Rejected).
 - **Messaging:** Direct contact with candidates.
 - **Notifications:** Alerts upon receiving messages.
 
-### 🛡️ Admin Area
+### Admin Area
 - **Global Overview:** Statistics on users and offers.
 - **User Management:** CRUD (Create, Read, Update, Delete) on students and recruiters.
 - **Moderation:** Validation of pending offers and handling of reports (delete or dismiss).
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 * **Frontend:** HTML5, CSS3 (TailwindCSS via CDN), JavaScript (Vanilla ES6).
 * **Backend:** PHP (Native, no framework).
@@ -49,7 +49,7 @@ The application is divided into three distinct areas:
 
 ---
 
-## 🚀 Installation and Setup
+## Installation and Setup
 
 This project is designed to run on a local server (WAMP, XAMPP, MAMP, or Laragon).
 
@@ -75,7 +75,7 @@ This project is designed to run on a local server (WAMP, XAMPP, MAMP, or Laragon
 
 ---
 
-## 🔑 Demo Accounts
+## Demo Accounts
 
 To test the different roles, you can use these pre-configured accounts (if present in the imported SQL file):
 
@@ -87,7 +87,7 @@ To test the different roles, you can use these pre-configured accounts (if prese
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 /
